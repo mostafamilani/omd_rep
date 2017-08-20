@@ -20,7 +20,7 @@ public class Test {
             for (Answer answer : p.evaluate(query)) {
                 System.out.println(answer);
             }
-        }
+        }salam
     }
 
 
