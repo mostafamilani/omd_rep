@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Predicate {
-    String name;
-    int arity;
+    public String name;
+    public int arity;
 
     static Map<String,Predicate> predicates = new HashMap<>();
 

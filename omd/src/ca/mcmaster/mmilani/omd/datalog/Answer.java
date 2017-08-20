@@ -23,22 +23,16 @@ public class Answer {
     public String toString() {
         String s = "";
         for (Variable variable : mappings.keySet()) {
-            s += variable.name + " -> " + mappings.get(variable) + "\n";
+            s += variable.name + " -> " + mappings.get(variable) + ", ";
         }
         return s + "\n";
-    }
-
-    public static boolean compatible(Answer a1, Answer a2) {
-        for (Variable variable : a1.mappings.keySet()) {
-            if (a2.mappings.containsKey(variable) && a2.mappings.get(variable) == a1.mappings.get(variable))
-                return false;
-        }
-        return true;
     }
 
     public static Answer merge(Answer a1, Answer a2) {
         Answer a = new Answer();
         for (Variable v : a1.mappings.keySet()) {
+            if (a2.mappings.containsKey(v) && a2.mappings.get(v) != a1.mappings.get(v))
+                return null;
             a.mappings.put(v, a1.mappings.get(v));
         }
         for (Variable v : a2.mappings.keySet()) {

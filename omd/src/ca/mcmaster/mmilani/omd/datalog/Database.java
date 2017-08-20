@@ -9,26 +9,30 @@ public class Database {
 
     public Set<Answer> evaluate(Query q) {
         Set<Answer> answers = new HashSet<>();
+        Answer dummy = new Answer();
+        answers.add(dummy);
         for (Atom qatom : q.body) {
             Set<Answer> partialAnswers = new HashSet<>();
             for (Fact fact : facts) {
-                Answer partial = unify(q.head, fact);
-                if (partial != null) {
-                    partialAnswers.addAll(merge(answers, partial));
-                }
+                Answer partial = unify(qatom, fact);
+                if (partial!=null) partialAnswers.add(partial);
             }
+            answers = merge(partialAnswers, answers);
         }
         return answers;
     }
 
-    private Set<Answer> merge(Set<Answer> answers, Answer answer) {
-        HashSet<Answer> ranswers = new HashSet<>();
-        for (Answer a : answers) {
-            if (Answer.compatible(a, answer)) {
-                ranswers.add(Answer.merge(a, answer));
+    private Set<Answer> merge(Set<Answer> as1, Set<Answer> as2) {
+        HashSet<Answer> ans = new HashSet<>();
+        for (Answer a1 : as1) {
+            for (Answer a2 : as2) {
+                Answer merge = Answer.merge(a1, a2);
+                if (merge != null) {
+                    ans.add(merge);
+                }
             }
         }
-        return ranswers;
+        return ans;
     }
 
     private Answer unify(Atom q, Fact f) {
@@ -41,5 +45,14 @@ public class Database {
                 return null;
         }
         return answer;
+    }
+
+    protected Database copy() {
+        Database database = new Database();
+        database.facts = new HashSet<Fact>();
+        for (Fact fact : facts) {
+            database.facts.add(fact);
+        }
+        return database;
     }
 }

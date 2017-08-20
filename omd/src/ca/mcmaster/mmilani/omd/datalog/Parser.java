@@ -18,7 +18,7 @@ public class Parser {
         String line;
         BufferedReader reader = new BufferedReader(new FileReader(file));
         while((line = reader.readLine()) != null) {
-            if (line.contains("?")) continue;
+            if (line.contains("?") || line.contains("%")) continue;
             if (line.contains(":-"))
                 program.rules.add(parseRule(line));
             else
@@ -46,9 +46,9 @@ public class Parser {
 
     public static List<Atom> parseBody(String body, Rule... rule) {
         ArrayList<Atom> atoms = new ArrayList<>();
-        while(body.length() > 0) {
+        while(body.length() > 1) {
             String atom = body.substring(0,body.indexOf(")")+1);
-            body = body.substring(body.indexOf(")")+2, body.length());
+            body = body.substring(body.indexOf(")")+1, body.length());
             atoms.add(Atom.parse(atom, rule));
         }
         return atoms;
@@ -59,6 +59,7 @@ public class Parser {
         String line;
         BufferedReader reader = new BufferedReader(new FileReader(file));
         while((line = reader.readLine()) != null) {
+            if (line.contains("%")) continue;
             if (line.contains("?")) {
                 queries.add(parseQuery(line));
             }
@@ -71,8 +72,7 @@ public class Parser {
         Query query = new Query();
         line = line.replaceAll(
                 " ", "");
-        query.body = new ArrayList<>();
-        query.body.add(Atom.parse(line.substring(0, line.indexOf("?")), query));
+        query.body = parseBody(line.substring(0, line.indexOf("?")), query);
         return query;
     }
 }

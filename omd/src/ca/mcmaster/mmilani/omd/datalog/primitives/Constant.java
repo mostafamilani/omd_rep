@@ -7,19 +7,18 @@ public class Constant extends Term {
     String label;
     static Map<String, Constant> constants = new HashMap<>();
 
-    public Constant(String label) {
+    private Constant(String label) {
         this.label = label;
     }
 
     public static Constant fetch(String label) {
-        if (constants.containsKey(label))
-            return constants.get(label);
-        else
-            return new Constant(label);
+        if (!constants.containsKey(label))
+            constants.put(label, new Constant(label));
+        return constants.get(label);
     }
 
     @Override
     public String toString() {
-        return "" + label;
+        return "'" + label + "'";
     }
 }

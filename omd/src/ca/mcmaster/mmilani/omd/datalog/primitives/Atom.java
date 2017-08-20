@@ -33,9 +33,11 @@ public abstract class Atom {
                     fact = false;
             }
             Predicate p = Predicate.fetch(pname, ts.size());
-            if (fact)
-                atom = new Fact(p, ts);
-            else
+            if (fact) {
+                if (!Fact.facts.containsKey(s))
+                    atom = new Fact(p, ts);
+                else atom = Fact.fetch(s);
+            } else
                 atom = new PositiveAtom(p, ts);
         }
         return atom;
