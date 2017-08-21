@@ -45,4 +45,14 @@ public class Rule {
     public boolean isNC() {
         return head == null && !(this instanceof Query);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return (this + "").equals(((Rule) o) + "");
+    }
+
+    @Override
+    public int hashCode() {
+        return (this + "").hashCode();
+    }
 }

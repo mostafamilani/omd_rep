@@ -1,5 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
+import java.beans.Expression;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,29 +19,32 @@ public abstract class Atom {
     }
 
     public static Atom parse(String s, Rule... rule) {
-        StringTokenizer t = new StringTokenizer(s, "(,=).");
+        StringTokenizer t = new StringTokenizer(s, "(,=)");
         Atom atom = null;
         if (s.contains("=")) {
             atom = new EqulityAtom(Term.parse(t.nextToken(), rule), Term.parse(t.nextToken(), rule));
         } else {
             String pname = t.nextToken();
             List<Term> ts = new ArrayList<>();
-            boolean fact = true;
             while(t.hasMoreTokens()) {
                 Term term = Term.parse(t.nextToken(), rule);
                 ts.add(term);
-                if (term instanceof Variable)
-                    fact = false;
             }
             Predicate p = Predicate.fetch(pname, ts.size());
-            if (fact) {
-                if (!Fact.facts.containsKey(s))
-                    atom = new Fact(p, ts);
-                else atom = Fact.fetch(s);
-            } else
+            if (isFact(ts))
+                atom = Fact.addFact(p, ts);
+            else
                 atom = new PositiveAtom(p, ts);
         }
         return atom;
+    }
+
+    private static boolean isFact(List<Term> terms) {
+        for (Term next : terms) {
+            if (! (next instanceof Constant))
+                return false;
+        }
+        return true;
     }
 
     @Override

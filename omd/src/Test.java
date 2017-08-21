@@ -16,6 +16,8 @@ public class Test {
         Program p = pa.parseProgram();
         p.chase();
         List<Query> queries = pa.parseQueries();
+
+
         for (Query query : queries) {
             System.out.println("query = " + query);
             for (Answer answer : p.evaluate(query)) {

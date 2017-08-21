@@ -22,7 +22,7 @@ public class Parser {
             if (line.contains(":-"))
                 program.rules.add(parseRule(line));
             else
-                program.edb.facts.add((Fact) Atom.parse(line));
+                program.edb.facts.add((Fact) Atom.parse(line.substring(0, line.length()-1)));
         }
         return program;
     }
@@ -36,9 +36,9 @@ public class Parser {
         String head = "";
         line = line.replaceAll(
                 " ", "");
-        rule.body = parseBody(line.substring(line.indexOf(":")+2, line.length()), rule);
+        rule.body = parseBody(line.substring(line.indexOf(":-")+2, line.length()-1), rule);
         if (!line.contains("!")) {
-            head = line.substring(0,line.indexOf(":"));
+            head = line.substring(0,line.indexOf(":-"));
             rule.head = Atom.parse(head, rule);
         }
         return rule;

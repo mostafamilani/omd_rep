@@ -7,14 +7,14 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.Variable;
 import java.util.*;
 
 public class Answer {
-    Map<Variable, Constant> mappings = new HashMap<>();
+    Map<Variable, Term> mappings = new HashMap<>();
 
     public boolean map(Term tq, Term tf) {
         if (tq instanceof Constant) return tq == tf;
         if (mappings.containsKey(tq) && mappings.get(tq) != tf) {
             return false;
         } else {
-            mappings.put((Variable) tq, (Constant) tf);
+            mappings.put((Variable) tq, tf);
             return true;
         }
     }
@@ -39,5 +39,15 @@ public class Answer {
             a.mappings.put(v, a2.mappings.get(v));
         }
         return a;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return (this + "").equals(o + "");
+    }
+
+    @Override
+    public int hashCode() {
+        return (this + "").hashCode();
     }
 }

@@ -5,6 +5,16 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 import java.util.*;
 
 public class Database {
+    @Override
+    public String toString() {
+        if (facts.isEmpty()) return "";
+        String s = "";
+        for (Fact fact : facts) {
+            s += fact + ", ";
+        }
+        return s.substring(0, s.length()-2);
+    }
+
     Set<Fact> facts = new HashSet<Fact>();
 
     public Set<Answer> evaluate(Query q) {

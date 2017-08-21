@@ -3,14 +3,13 @@ package ca.mcmaster.mmilani.omd.datalog;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
+import java.util.function.UnaryOperator;
 
 public class Program {
     Set<Rule> rules;
     public Database edb = new Database();
+    Map<Rule,Set<Answer>> applieds = new HashMap<Rule, Set<Answer>>();
 
     Database idb;
 
@@ -28,6 +27,8 @@ public class Program {
 
     public void chase() {
         idb = edb.copy();
+        System.out.println("edb:");
+        System.out.println(idb);
         boolean newAtom = true;
         while (newAtom) {
             newAtom = false;
@@ -39,6 +40,8 @@ public class Program {
                 applyEGDs();
             }
         }
+        System.out.println("idb:");
+        System.out.println(idb);
     }
 
     private void applyNCs() {
@@ -59,6 +62,7 @@ public class Program {
         Set<Answer> ans = idb.evaluate(q);
         boolean newAtom = false;
         for (Answer a : ans) {
+            if (applied(rule, a)) continue;
             if (rule.isEGD()) {
                 applyEGD(rule, a);
             }
@@ -67,6 +71,7 @@ public class Program {
             }
             if (rule.isTGD()) {
                 Fact at = generate(rule.head, a);
+                addApplied(rule,a);
                 if (!idb.facts.contains(at)) {
                     idb.facts.add(at);
                     newAtom = true;
@@ -74,6 +79,17 @@ public class Program {
             }
         }
         return newAtom;
+    }
+
+    private void addApplied(Rule rule, Answer answer) {
+        if (!applieds.containsKey(rule))
+            applieds.put(rule, new HashSet<Answer>());
+        applieds.get(rule).add(answer);
+
+    }
+
+    private boolean applied(Rule rule, Answer answer) {
+        return applieds.containsKey(rule) && applieds.get(rule).contains(answer);
     }
 
     private void applyNC(Rule rule) {
@@ -87,24 +103,74 @@ public class Program {
         EqulityAtom eatom = (EqulityAtom) rule.head;
         if (!a.mappings.containsKey(eatom.t1) || !a.mappings.containsKey(eatom.t2))
             throw new RuntimeException("Syntax error! Invalid egds (" + rule + ")");
-        Constant c1 = a.mappings.get(eatom.t1);
-        Constant c2 = a.mappings.get(eatom.t2);
-        if (c1 != c2)
+        Term c1 = a.mappings.get(eatom.t1);
+        Term c2 = a.mappings.get(eatom.t2);
+        if (c1 == c2)
+            return;
+        if (c1 instanceof Constant && c2 instanceof Constant && c1 != c2)
             throw new RuntimeException("Chase failure! Egd  (" + rule + ") does not hold!");
+        Null n;
+        Term t;
+        if (c1 instanceof Null) {
+            n = (Null) c1;
+            t = c2;
+        } else if (c1 instanceof Null) {
+            n = (Null) c2;
+            t = c1;
+        } else {
+            throw new RuntimeException("Equality values are invalid!");
+        }
+        replaceWith(n,t);
     }
+
+    private void replaceWith(Null n, Term t) {
+        for (Atom atom : n.atoms) {
+            Fact.facts.keySet().remove(atom.toString());
+            atom.terms.replaceAll(new UnaryOperator<Term>() {
+                @Override
+                public Term apply(Term term) {
+                    if (term == n)
+                        return t;
+                    return term;
+                }
+            });
+            Fact.facts.put(atom.toString(), (Fact) atom);
+        }
+        checkAnomalies();
+    }
+
+    private void checkAnomalies() {
+        Set<Fact> facts = new HashSet<>();
+        for (Fact fact : idb.facts) {
+            if (!Fact.facts.containsKey(fact.toString()))
+                throw new RuntimeException("Ivalid fact in IDB! " + fact);
+            else
+                facts.add(Fact.facts.get(fact.toString()));
+        }
+        idb.facts = facts;
+    }
+
 
     private Fact generate(Atom atom, Answer answer) {
         ArrayList<Term> terms = new ArrayList<>();
+        Set<Null> nulls = new HashSet<>();
         for (Term term : atom.terms) {
             if (term instanceof Constant)
                 terms.add(term);
             else if (term instanceof Variable) {
                 if (answer.mappings.containsKey(term))
                     terms.add(answer.mappings.get(term));
-                else
-                    terms.add(Null.invent());
+                else {
+                    Null n = Null.invent();
+                    terms.add(n);
+                    nulls.add(n);
+                }
             }
         }
-        return Fact.fetch(atom.predicate, terms);
+        Fact fact = Fact.addFact(atom.predicate, terms);
+        for (Null n : nulls) {
+            n.atoms.add(fact);
+        }
+        return fact;
     }
 }
