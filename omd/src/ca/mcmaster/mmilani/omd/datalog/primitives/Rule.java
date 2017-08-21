@@ -35,11 +35,11 @@ public class Rule {
     }
 
     public boolean isTGD() {
-        return head != null && !(head instanceof EqulityAtom);
+        return head != null && !(head instanceof EqualityAtom);
     }
 
     public boolean isEGD() {
-        return head != null && head instanceof EqulityAtom;
+        return head != null && head instanceof EqualityAtom;
     }
 
     public boolean isNC() {

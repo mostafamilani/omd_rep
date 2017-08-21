@@ -2,7 +2,6 @@ package ca.mcmaster.mmilani.omd.datalog;
 
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
-import java.io.File;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
@@ -29,19 +28,26 @@ public class Program {
         idb = edb.copy();
         System.out.println("edb:");
         System.out.println(idb);
-        boolean newAtom = true;
-        while (newAtom) {
-            newAtom = false;
-            for (Rule rule : rules) {
-                if (rule.isTGD() && fireRule(rule)) {
-                    newAtom = true;
+        for (int i = 0; i < Predicate.maxArity(); i++) {
+            boolean newAtom = true;
+            while (newAtom) {
+                newAtom = false;
+                for (Rule rule : rules) {
+                    if (rule.isTGD() && fireRule(rule)) {
+                        newAtom = true;
+                    }
+                    applyNCs();
+                    applyEGDs();
                 }
-                applyNCs();
-                applyEGDs();
             }
+            resume();
         }
         System.out.println("idb:");
         System.out.println(idb);
+    }
+
+    public void resume() {
+        Null.freezeAll();
     }
 
     private void applyNCs() {
@@ -72,13 +78,42 @@ public class Program {
             if (rule.isTGD()) {
                 Fact at = generate(rule.head, a);
                 addApplied(rule,a);
-                if (!idb.facts.contains(at)) {
+                if (checkAddition(at)) {
                     idb.facts.add(at);
+                    System.out.println(at);
                     newAtom = true;
                 }
             }
         }
         return newAtom;
+    }
+
+    private boolean checkAddition(Fact a) {
+        for (Fact fact : idb.facts) {
+            if (homomorphic(a, fact))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean homomorphic(Fact a1, Fact a2) {
+        if (!a1.predicate.equals(a2.predicate))
+            return false;
+        Map<Term,Term> u = new HashMap<>();
+        for (int i = 0; i < a1.terms.size(); i++) {
+            Term t1 = a1.terms.get(i);
+            Term t2 = a2.terms.get(i);
+            if (t1.equals(t2))
+                continue;
+            if (t1 instanceof Constant)
+                return false;
+            if (t1 instanceof Null && ((Null)t1).frozen)
+                return false;
+            if (!u.containsKey(t1)) u.put(t1,t2);
+            if (!u.get(t1).equals(t2))
+                return false;
+        }
+        return true;
     }
 
     private void addApplied(Rule rule, Answer answer) {
@@ -100,27 +135,28 @@ public class Program {
     }
 
     private void applyEGD(Rule rule, Answer a) {
-        EqulityAtom eatom = (EqulityAtom) rule.head;
+        EqualityAtom eatom = (EqualityAtom) rule.head;
         if (!a.mappings.containsKey(eatom.t1) || !a.mappings.containsKey(eatom.t2))
             throw new RuntimeException("Syntax error! Invalid egds (" + rule + ")");
         Term c1 = a.mappings.get(eatom.t1);
         Term c2 = a.mappings.get(eatom.t2);
         if (c1 == c2)
             return;
-        if (c1 instanceof Constant && c2 instanceof Constant && c1 != c2)
+        if (c1 instanceof Constant && c2 instanceof Constant)
             throw new RuntimeException("Chase failure! Egd  (" + rule + ") does not hold!");
-        Null n;
-        Term t;
-        if (c1 instanceof Null) {
-            n = (Null) c1;
-            t = c2;
-        } else if (c1 instanceof Null) {
-            n = (Null) c2;
-            t = c1;
-        } else {
-            throw new RuntimeException("Equality values are invalid!");
-        }
-        replaceWith(n,t);
+        throw new RuntimeException("Equating nulls! Not separable!");
+//        Null n;
+//        Term t;
+//        if (c1 instanceof Null) {
+//            n = (Null) c1;
+//            t = c2;
+//        } else if (c1 instanceof Null) {
+//            n = (Null) c2;
+//            t = c1;
+//        } else {
+//            throw new RuntimeException("Equality values are invalid!");
+//        }
+//        replaceWith(n,t);
     }
 
     private void replaceWith(Null n, Term t) {

@@ -3,9 +3,10 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 import java.util.*;
 
 public class Null extends Term {
+    public boolean frozen = false;
     static int index = 0;
     String label;
-    private static Map<String, Null> nulls = new HashMap<>();
+    public static Map<String, Null> nulls = new HashMap<>();
     public Set<Atom> atoms = new HashSet<>();
 
     @Override
@@ -39,5 +40,11 @@ public class Null extends Term {
     @Override
     public int hashCode() {
         return toString().hashCode();
+    }
+
+    public static void freezeAll() {
+        for (Null next : nulls.values()) {
+            next.frozen = true;
+        }
     }
 }

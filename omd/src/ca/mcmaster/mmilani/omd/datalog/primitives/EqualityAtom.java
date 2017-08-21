@@ -1,10 +1,10 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-public class EqulityAtom extends BuiltIn {
+public class EqualityAtom extends BuiltIn {
     public Term t1;
     public Term t2;
 
-    public EqulityAtom(Term t1, Term t2) {
+    public EqualityAtom(Term t1, Term t2) {
         this.t1 = t1;
         this.t2 = t2;
     }

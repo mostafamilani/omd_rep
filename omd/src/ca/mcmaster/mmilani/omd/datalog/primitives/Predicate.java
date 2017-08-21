@@ -1,6 +1,7 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class Predicate {
@@ -21,5 +22,14 @@ public class Predicate {
         if (predicate.arity != arity)
             throw new RuntimeException("Invalid Arity!");
         return predicate;
+    }
+
+    public static int maxArity() {
+        int max = Integer.MIN_VALUE;
+        for (Predicate predicate : predicates.values()) {
+            if (predicate.arity > max)
+                max = predicate.arity;
+        }
+        return max;
     }
 }

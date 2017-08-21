@@ -1,8 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import java.beans.Expression;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -22,7 +20,7 @@ public abstract class Atom {
         StringTokenizer t = new StringTokenizer(s, "(,=)");
         Atom atom = null;
         if (s.contains("=")) {
-            atom = new EqulityAtom(Term.parse(t.nextToken(), rule), Term.parse(t.nextToken(), rule));
+            atom = new EqualityAtom(Term.parse(t.nextToken(), rule), Term.parse(t.nextToken(), rule));
         } else {
             String pname = t.nextToken();
             List<Term> ts = new ArrayList<>();
