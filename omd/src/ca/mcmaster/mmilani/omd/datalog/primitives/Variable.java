@@ -2,7 +2,8 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 public class Variable extends Term {
     public String name;
-    Rule rule;
+    public Rule rule;
+    public boolean marked;
 
     public Variable(String name, Rule rule) {
         this.name = name;
@@ -12,5 +13,13 @@ public class Variable extends Term {
     @Override
     public String toString() {
         return "" + name;
+    }
+
+    boolean isBodyVariable() {
+        return !rule.existentials.contains(this);
+    }
+
+    boolean isExistentialVariable() {
+        return rule.existentials.contains(this);
     }
 }

@@ -11,7 +11,7 @@ public class Fact extends PositiveAtom {
 
     static Fact fetch(String s) {
         if (!facts.containsKey(s))
-            facts.put(s, (Fact) Atom.parse(s));
+            facts.put(s, (Fact) Atom.parse(s, false));
         return facts.get(s);
     }
 

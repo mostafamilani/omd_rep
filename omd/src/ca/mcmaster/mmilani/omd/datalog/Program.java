@@ -9,6 +9,7 @@ public class Program {
     Set<Rule> rules;
     public Database edb = new Database();
     Map<Rule,Set<Answer>> applieds = new HashMap<Rule, Set<Answer>>();
+    Map<Rule,Set<Answer>> fired = new HashMap<Rule, Set<Answer>>();
 
     Database idb;
 
@@ -28,7 +29,7 @@ public class Program {
         idb = edb.copy();
         System.out.println("edb:");
         System.out.println(idb);
-        for (int i = 0; i < Predicate.maxArity(); i++) {
+        for (int i = 0; i <= Predicate.maxArity(); i++) {
             boolean newAtom = true;
             while (newAtom) {
                 newAtom = false;
@@ -47,6 +48,7 @@ public class Program {
     }
 
     public void resume() {
+        clearApplied();
         Null.freezeAll();
     }
 
@@ -68,7 +70,7 @@ public class Program {
         Set<Answer> ans = idb.evaluate(q);
         boolean newAtom = false;
         for (Answer a : ans) {
-            if (applied(rule, a)) continue;
+            if (isApplied(rule, a)) continue;
             if (rule.isEGD()) {
                 applyEGD(rule, a);
             }
@@ -77,15 +79,39 @@ public class Program {
             }
             if (rule.isTGD()) {
                 Fact at = generate(rule.head, a);
-                addApplied(rule,a);
+                applied(rule,a);
                 if (checkAddition(at)) {
                     idb.facts.add(at);
+                    fired(rule,a);
+                    confirmNullInvention(at);
                     System.out.println(at);
                     newAtom = true;
+                } else {
+                    rollbackNullInvention(at);
                 }
             }
         }
         return newAtom;
+    }
+
+    private void confirmNullInvention(Fact fact) {
+        for (Term term : fact.terms) {
+            if (term instanceof Null) {
+                Null n = (Null) term;
+                n.confirmed = true;
+            }
+        }
+    }
+
+    private void rollbackNullInvention(Fact fact) {
+        for (Term term : fact.terms) {
+            if (term instanceof Null) {
+                Null n = (Null) term;
+                if (!n.confirmed) {
+                    if (Null.INDEX > n.index) Null.INDEX = n.index + 1;
+                }
+            }
+        }
     }
 
     private boolean checkAddition(Fact a) {
@@ -116,15 +142,33 @@ public class Program {
         return true;
     }
 
-    private void addApplied(Rule rule, Answer answer) {
+    private void applied(Rule rule, Answer answer) {
         if (!applieds.containsKey(rule))
             applieds.put(rule, new HashSet<Answer>());
         applieds.get(rule).add(answer);
 
     }
 
-    private boolean applied(Rule rule, Answer answer) {
+    private boolean isApplied(Rule rule, Answer answer) {
         return applieds.containsKey(rule) && applieds.get(rule).contains(answer);
+    }
+
+    private void clearApplied() {
+        for (Rule rule : applieds.keySet()) {
+            applieds.get(rule).clear();
+            if (fired.containsKey(rule))
+                applieds.get(rule).addAll(fired.get(rule));
+        }
+    }
+
+    private void fired(Rule rule, Answer answer) {
+        if (!fired.containsKey(rule))
+            fired.put(rule, new HashSet<Answer>());
+        fired.get(rule).add(answer);
+    }
+
+    private boolean isFired(Rule rule, Answer answer) {
+        return fired.containsKey(rule) && fired.get(rule).contains(answer);
     }
 
     private void applyNC(Rule rule) {

@@ -16,16 +16,16 @@ public abstract class Atom {
         this.terms = terms;
     }
 
-    public static Atom parse(String s, Rule... rule) {
+    public static Atom parse(String s, boolean body, Rule... rule) {
         StringTokenizer t = new StringTokenizer(s, "(,=)");
         Atom atom = null;
         if (s.contains("=")) {
-            atom = new EqualityAtom(Term.parse(t.nextToken(), rule), Term.parse(t.nextToken(), rule));
+            atom = new EqualityAtom(Term.parse(t.nextToken(), body, rule), Term.parse(t.nextToken(), body, rule));
         } else {
             String pname = t.nextToken();
             List<Term> ts = new ArrayList<>();
             while(t.hasMoreTokens()) {
-                Term term = Term.parse(t.nextToken(), rule);
+                Term term = Term.parse(t.nextToken(), body, rule);
                 ts.add(term);
             }
             Predicate p = Predicate.fetch(pname, ts.size());

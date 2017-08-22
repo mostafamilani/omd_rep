@@ -7,12 +7,18 @@ public class Rule {
     public Atom head;
     public Map<String, Variable> variables = new HashMap<>();
     public Set<Variable> existentials = new HashSet<>();
+    public Set<Variable> headVariables = new HashSet<>();
 
-    public Term fetchVariable(String name) {
+    public Term fetchVariable(String name, boolean body) {
         if (!variables.containsKey(name)) {
             variables.put(name, new Variable(name, this));
+            if (!body) {
+                existentials.add(variables.get(name));
+            } else {
+                headVariables.add(variables.get(name));
+            }
         }
-            return variables.get(name);
+        return variables.get(name);
     }
 
     @Override

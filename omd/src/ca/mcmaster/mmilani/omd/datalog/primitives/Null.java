@@ -3,8 +3,10 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 import java.util.*;
 
 public class Null extends Term {
+    public static int INDEX = 0;
     public boolean frozen = false;
-    static int index = 0;
+    public boolean confirmed = false;
+    public int index = 0;
     String label;
     public static Map<String, Null> nulls = new HashMap<>();
     public Set<Atom> atoms = new HashSet<>();
@@ -19,8 +21,8 @@ public class Null extends Term {
     }
 
     public static Null invent() {
-        index++;
-        String label = "z_" + index;
+        INDEX++;
+        String label = "z_" + INDEX;
         Null n = new Null(label);
         nulls.put(label, n);
         return n;
