@@ -65,14 +65,14 @@ public class SyntacticAnalyzer {
         }
         HashSet<Position> positions = new HashSet<>();
         for (Node node : Node.nodes.values()) {
-            if (path(node, node, true)) {
+            if (specialPath(node, node)) {
                 positions.add(node.p);
             }
         }
         return positions;
     }
 
-    private static boolean path(Node n1, Node n2) {
+    private static boolean specialPath(Node n1, Node n2) {
         Set<Node> visited = new HashSet<Node>();
         Node cnode = n1;
         boolean special = false;
@@ -158,8 +158,8 @@ public class SyntacticAnalyzer {
             for (Rule rule : rules) {
                 for (Variable variable : rule.variables.values()) {
                     if (!variable.isBodyVariable()) continue;
-                    if (containsAll(markedPositions, getHeadPositions(rule, variable)) && !variable.marked) {
-                        markedPositions.addAll(getBodyPositions(rule, variable));
+                    if (containsAll(markedPositions, getHeadPositions(variable, rule)) && !variable.marked) {
+                        markedPositions.addAll(getBodyPositions(variable, rule));
                         variable.marked = true;
                         newMarked = true;
                     }
