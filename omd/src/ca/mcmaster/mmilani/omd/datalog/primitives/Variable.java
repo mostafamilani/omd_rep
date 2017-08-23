@@ -15,11 +15,11 @@ public class Variable extends Term {
         return "" + name;
     }
 
-    boolean isBodyVariable() {
+    public boolean isBodyVariable() {
         return !rule.existentials.contains(this);
     }
 
-    boolean isExistentialVariable() {
+    public boolean isExistentialVariable() {
         return rule.existentials.contains(this);
     }
 }
