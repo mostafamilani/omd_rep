@@ -8,7 +8,7 @@ public class Predicate {
     public String name;
     public int arity;
 
-    static Map<String,Predicate> predicates = new HashMap<>();
+    static Map<String, Predicate> predicates = new HashMap<>();
 
     public Predicate(String name, int arity) {
         this.name = name;
@@ -31,5 +31,10 @@ public class Predicate {
                 max = predicate.arity;
         }
         return max;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

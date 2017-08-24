@@ -8,17 +8,13 @@ import java.util.function.UnaryOperator;
 public class Program {
     Set<Rule> rules;
     public Database edb = new Database();
-    Map<Rule,Set<Answer>> applieds = new HashMap<Rule, Set<Answer>>();
-    Map<Rule,Set<Answer>> fired = new HashMap<Rule, Set<Answer>>();
+    Map<Rule, Set<Answer>> applieds = new HashMap<Rule, Set<Answer>>();
+    Map<Rule, Set<Answer>> fired = new HashMap<Rule, Set<Answer>>();
 
     Database idb;
 
     public Program() {
         rules = new HashSet<Rule>();
-    }
-
-    void init() {
-
     }
 
     public Set<Answer> evaluate(Query q) {
@@ -79,10 +75,10 @@ public class Program {
             }
             if (rule.isTGD()) {
                 Fact at = generate(rule.head, a);
-                applied(rule,a);
+                applied(rule, a);
                 if (checkAddition(at)) {
                     idb.facts.add(at);
-                    fired(rule,a);
+                    fired(rule, a);
                     confirmNullInvention(at);
                     System.out.println(at);
                     newAtom = true;
@@ -125,7 +121,7 @@ public class Program {
     private boolean homomorphic(Fact a1, Fact a2) {
         if (!a1.predicate.equals(a2.predicate))
             return false;
-        Map<Term,Term> u = new HashMap<>();
+        Map<Term, Term> u = new HashMap<>();
         for (int i = 0; i < a1.terms.size(); i++) {
             Term t1 = a1.terms.get(i);
             Term t2 = a2.terms.get(i);
@@ -133,9 +129,9 @@ public class Program {
                 continue;
             if (t1 instanceof Constant)
                 return false;
-            if (t1 instanceof Null && ((Null)t1).frozen)
+            if (t1 instanceof Null && ((Null) t1).frozen)
                 return false;
-            if (!u.containsKey(t1)) u.put(t1,t2);
+            if (!u.containsKey(t1)) u.put(t1, t2);
             if (!u.get(t1).equals(t2))
                 return false;
         }
@@ -188,24 +184,22 @@ public class Program {
             return;
         if (c1 instanceof Constant && c2 instanceof Constant)
             throw new RuntimeException("Chase failure! Egd  (" + rule + ") does not hold!");
-        throw new RuntimeException("Equating nulls! Not separable!");
-//        Null n;
-//        Term t;
-//        if (c1 instanceof Null) {
-//            n = (Null) c1;
-//            t = c2;
-//        } else if (c1 instanceof Null) {
-//            n = (Null) c2;
-//            t = c1;
-//        } else {
-//            throw new RuntimeException("Equality values are invalid!");
-//        }
-//        replaceWith(n,t);
+        Null n;
+        Term t;
+        if (c1 instanceof Null) {
+            n = (Null) c1;
+            t = c2;
+        } else if (c1 instanceof Null) {
+            n = (Null) c2;
+            t = c1;
+        } else {
+            throw new RuntimeException("Equality values are invalid!");
+        }
+        replaceWith(n,t);
     }
 
     private void replaceWith(Null n, Term t) {
         for (Atom atom : n.atoms) {
-            Fact.facts.keySet().remove(atom.toString());
             atom.terms.replaceAll(new UnaryOperator<Term>() {
                 @Override
                 public Term apply(Term term) {
@@ -214,22 +208,9 @@ public class Program {
                     return term;
                 }
             });
-            Fact.facts.put(atom.toString(), (Fact) atom);
         }
-        checkAnomalies();
+        Fact.checkNullChange(n, t);
     }
-
-    private void checkAnomalies() {
-        Set<Fact> facts = new HashSet<>();
-        for (Fact fact : idb.facts) {
-            if (!Fact.facts.containsKey(fact.toString()))
-                throw new RuntimeException("Ivalid fact in IDB! " + fact);
-            else
-                facts.add(Fact.facts.get(fact.toString()));
-        }
-        idb.facts = facts;
-    }
-
 
     private Fact generate(Atom atom, Answer answer) {
         ArrayList<Term> terms = new ArrayList<>();

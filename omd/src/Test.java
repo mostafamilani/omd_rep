@@ -12,7 +12,7 @@ public class Test {
     public static void main(String[] args) throws IOException {
         File file = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\prg.txt");
         Parser pa = new Parser();
-        pa.init(file);
+        pa.initFrom(file);
         Program p = pa.parseProgram();
         p.chase();
         List<Query> queries = pa.parseQueries();

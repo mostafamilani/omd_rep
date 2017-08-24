@@ -24,7 +24,7 @@ public abstract class Atom {
         } else {
             String pname = t.nextToken();
             List<Term> ts = new ArrayList<>();
-            while(t.hasMoreTokens()) {
+            while (t.hasMoreTokens()) {
                 Term term = Term.parse(t.nextToken(), body, rule);
                 ts.add(term);
             }
@@ -39,7 +39,7 @@ public abstract class Atom {
 
     private static boolean isFact(List<Term> terms) {
         for (Term next : terms) {
-            if (! (next instanceof Constant))
+            if (!(next instanceof Constant))
                 return false;
         }
         return true;
@@ -51,6 +51,6 @@ public abstract class Atom {
         for (Term term : terms) {
             s += term + ",";
         }
-        return s.substring(0, s.length()-1) + ")";
+        return s.substring(0, s.length() - 1) + ")";
     }
 }

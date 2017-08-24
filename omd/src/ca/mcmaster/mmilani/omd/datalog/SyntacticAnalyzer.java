@@ -2,6 +2,9 @@ package ca.mcmaster.mmilani.omd.datalog;
 
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 
 public class SyntacticAnalyzer {
@@ -53,12 +56,9 @@ public class SyntacticAnalyzer {
                 Set<Node> bodyNodes = getNodes(getBodyPositions(variable, rule));
                 Set<Node> headNodes = getNodes(getHeadPositions(variable, rule));
                 for (Node b : bodyNodes) {
-                    for (Node h : headNodes) {
-                        if (variable.isExistentialVariable()) {
-                            b.nextSpecials.add(h);
-                        } else {
-                            b.nexts.add(h);
-                        }
+                    b.nexts.addAll(headNodes);
+                    for (Variable evar : rule.existentials) {
+                        b.nextSpecials.addAll(getNodes(getHeadPositions(evar, rule)));
                     }
                 }
             }
@@ -76,7 +76,7 @@ public class SyntacticAnalyzer {
         Set<Node> visited = new HashSet<Node>();
         Node cnode = n1;
         boolean special = false;
-        while(true) {
+        while (true) {
             Node next = null;
             visited.add(cnode);
             for (Node n : cnode.nexts) {
@@ -100,7 +100,7 @@ public class SyntacticAnalyzer {
     private static Set<Node> getNodes(Set<Position> positions) {
         HashSet<Node> nodes = new HashSet<>();
         for (Position position : positions) {
-            Node.fetchNode(position);
+            nodes.add(Node.fetchNode(position));
         }
         return nodes;
     }
@@ -112,8 +112,8 @@ public class SyntacticAnalyzer {
             if (term == variable) {
                 Position position = new Position(pos, rule.head.predicate);
                 positions.add(position);
-                pos++;
             }
+            pos++;
         }
         return positions;
     }
@@ -126,8 +126,8 @@ public class SyntacticAnalyzer {
                 if (term == variable) {
                     Position position = new Position(pos, atom.predicate);
                     positions.add(position);
-                    pos++;
                 }
+                pos++;
             }
         }
         return positions;
@@ -151,9 +151,8 @@ public class SyntacticAnalyzer {
                 }
             }
         }
-
         boolean newMarked = true;
-        while (newMarked) {
+        while (newMarked && !markedPositions.isEmpty()) {
             newMarked = false;
             for (Rule rule : rules) {
                 for (Variable variable : rule.variables.values()) {
@@ -188,5 +187,15 @@ public class SyntacticAnalyzer {
             }
         }
         return false;
+    }
+
+    public static void main(String[] args) throws IOException {
+        Parser p = new Parser();
+        p.initFrom(new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\program.txt"));
+        Program program = p.parseProgram();
+        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.rules));
+        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.rules));
+        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.rules));
+        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.rules));
     }
 }

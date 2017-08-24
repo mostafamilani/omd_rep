@@ -24,4 +24,9 @@ public class Position {
     public int hashCode() {
         return Predicate.predicates.values().size() * predicate.hashCode() + pos;
     }
+
+    @Override
+    public String toString() {
+        return predicate + "[" + pos + "]";
+    }
 }

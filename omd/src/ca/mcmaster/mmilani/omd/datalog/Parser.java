@@ -17,17 +17,17 @@ public class Parser {
         Program program = new Program();
         String line;
         BufferedReader reader = new BufferedReader(new FileReader(file));
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             if (line.contains("?") || line.contains("%")) continue;
             if (line.contains(":-"))
                 program.rules.add(parseRule(line));
             else
-                program.edb.facts.add((Fact) Atom.parse(line.substring(0, line.length()-1), false));
+                program.edb.facts.add((Fact) Atom.parse(line.substring(0, line.length() - 1), false));
         }
         return program;
     }
 
-    public void init(File file) throws FileNotFoundException {
+    public void initFrom(File file) throws FileNotFoundException {
         this.file = file;
     }
 
@@ -36,9 +36,9 @@ public class Parser {
         String head = "";
         line = line.replaceAll(
                 " ", "");
-        rule.body = parseBody(line.substring(line.indexOf(":-")+2, line.length()-1), rule);
-        if (!line.contains("!")) {
-            head = line.substring(0,line.indexOf(":-"));
+        rule.body = parseBody(line.substring(line.indexOf(":-") + 2, line.length() - 1), rule);
+        if (!line.startsWith(":-")) {
+            head = line.substring(0, line.indexOf(":-"));
             rule.head = Atom.parse(head, false, rule);
         }
         return rule;
@@ -46,9 +46,9 @@ public class Parser {
 
     public static List<Atom> parseBody(String body, Rule... rule) {
         ArrayList<Atom> atoms = new ArrayList<>();
-        while(body.length() > 1) {
-            String atom = body.substring(0,body.indexOf(")")+1);
-            body = body.substring(body.indexOf(")")+1, body.length());
+        while (body.length() > 1) {
+            String atom = body.substring(0, body.indexOf(")") + 1);
+            body = body.substring(body.indexOf(")") + 1, body.length());
             atoms.add(Atom.parse(atom, true, rule));
         }
         return atoms;
@@ -58,7 +58,7 @@ public class Parser {
         ArrayList<Query> queries = new ArrayList<>();
         String line;
         BufferedReader reader = new BufferedReader(new FileReader(file));
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             if (line.contains("%")) continue;
             if (line.contains("?")) {
                 queries.add(parseQuery(line));
