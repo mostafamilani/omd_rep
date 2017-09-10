@@ -1,0 +1,2 @@
+p(y,z) :- p(x,y).
+q(x,w) ?- p(x,y),p(y,z),p(z,w).

@@ -30,7 +30,7 @@ public abstract class Atom {
             }
             Predicate p = Predicate.fetch(pname, ts.size());
             if (isFact(ts))
-                atom = Fact.addFact(p, ts);
+                atom = Fact.addFact(p, ts, 0);
             else
                 atom = new PositiveAtom(p, ts);
         }
@@ -47,10 +47,20 @@ public abstract class Atom {
 
     @Override
     public String toString() {
-        String s = predicate.name + "(";
+        StringBuilder s = new StringBuilder(predicate.name + "(");
         for (Term term : terms) {
-            s += term + ",";
+            s.append(term).append(",");
         }
         return s.substring(0, s.length() - 1) + ")";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return ("" + obj).equals(this + "");
+    }
+
+    @Override
+    public int hashCode() {
+        return (this + "").hashCode();
     }
 }

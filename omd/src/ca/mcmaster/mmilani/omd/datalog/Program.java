@@ -2,22 +2,23 @@ package ca.mcmaster.mmilani.omd.datalog;
 
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 public class Program {
-    Set<Rule> rules;
-    public Database edb = new Database();
-    Map<Rule, Set<Answer>> applieds = new HashMap<Rule, Set<Answer>>();
-    Map<Rule, Set<Answer>> fired = new HashMap<Rule, Set<Answer>>();
+    public Set<TGD> tgds = new HashSet<>();
+    public Set<EGD> egds = new HashSet<>();
+    public Set<NC> ncs = new HashSet<>();
+    Database edb = new Database();
+    private Set<ApplicablePair> applicables = new HashSet<>();
+    private Set<ApplicablePair> applieds = new HashSet<>();
+    private Set<ApplicablePair> blockeds = new HashSet<>();
 
-    Database idb;
+    private Database idb;
 
-    public Program() {
-        rules = new HashSet<Rule>();
-    }
-
-    public Set<Answer> evaluate(Query q) {
+    public Set<Assignment> evaluate(Query q) {
         return idb.evaluate(q);
     }
 
@@ -28,14 +29,9 @@ public class Program {
         for (int i = 0; i <= Predicate.maxArity(); i++) {
             boolean newAtom = true;
             while (newAtom) {
-                newAtom = false;
-                for (Rule rule : rules) {
-                    if (rule.isTGD() && fireRule(rule)) {
-                        newAtom = true;
-                    }
-                    applyNCs();
-                    applyEGDs();
-                }
+                newAtom = applyNextPair();
+                applyNCs();
+                applyEGDs();
             }
             resume();
         }
@@ -43,51 +39,62 @@ public class Program {
         System.out.println(idb);
     }
 
-    public void resume() {
-        clearApplied();
+    private boolean applyNextPair() {
+        findApplicablePairs();
+        if (applicables.isEmpty()) {
+            return false;
+        }
+        boolean newAtom = false;
+        List<ApplicablePair> list = new ArrayList<>();
+        list.addAll(applicables);
+        list.sort((o1, o2) -> o1.assignment.level - o2.assignment.level);
+        ApplicablePair pair = list.get(0);
+
+        Fact at = generate((Atom) pair.rule.head, pair.assignment);
+        applicables.remove(pair);
+        if (checkAddition(at)) {
+            idb.facts.add(at);
+            applieds.add(pair);
+            confirmNullInvention(at);
+            System.out.println(at);
+            newAtom = true;
+        } else {
+            blockeds.add(pair);
+            rollbackNullInvention(at);
+        }
+        return newAtom;
+    }
+
+    private void findApplicablePairs() {
+        if (!applicables.isEmpty())
+            return;
+        for (Rule rule : tgds) {
+            if (rule instanceof TGD) {
+                Set<Assignment> evaluates = idb.evaluate(((TGD) rule).body);
+                for (Assignment assignment : evaluates) {
+                    ApplicablePair pair = new ApplicablePair(rule, assignment);
+                    if (!applieds.contains(pair) && !blockeds.contains(pair))
+                        applicables.add(pair);
+                }
+            }
+        }
+    }
+
+    private void resume() {
+        blockeds.clear();
         Null.freezeAll();
     }
 
     private void applyNCs() {
-        for (Rule rule : rules) {
-            if (rule.isNC()) fireRule(rule);
+        for (Rule rule : ncs) {
+            if (rule instanceof NC) applyNC(rule);
         }
     }
 
     private void applyEGDs() {
-        for (Rule rule : rules) {
-            if (rule.isEGD()) fireRule(rule);
+        for (EGD rule : egds) {
+            if (rule instanceof EGD) applyEGD(rule);
         }
-    }
-
-    private boolean fireRule(Rule rule) {
-        Query q = new Query();
-        q.body = rule.body;
-        Set<Answer> ans = idb.evaluate(q);
-        boolean newAtom = false;
-        for (Answer a : ans) {
-            if (isApplied(rule, a)) continue;
-            if (rule.isEGD()) {
-                applyEGD(rule, a);
-            }
-            if (rule.isNC()) {
-                applyNC(rule);
-            }
-            if (rule.isTGD()) {
-                Fact at = generate(rule.head, a);
-                applied(rule, a);
-                if (checkAddition(at)) {
-                    idb.facts.add(at);
-                    fired(rule, a);
-                    confirmNullInvention(at);
-                    System.out.println(at);
-                    newAtom = true;
-                } else {
-                    rollbackNullInvention(at);
-                }
-            }
-        }
-        return newAtom;
     }
 
     private void confirmNullInvention(Fact fact) {
@@ -104,7 +111,7 @@ public class Program {
             if (term instanceof Null) {
                 Null n = (Null) term;
                 if (!n.confirmed) {
-                    if (Null.INDEX > n.index) Null.INDEX = n.index + 1;
+                    n.remove();
                 }
             }
         }
@@ -138,64 +145,40 @@ public class Program {
         return true;
     }
 
-    private void applied(Rule rule, Answer answer) {
-        if (!applieds.containsKey(rule))
-            applieds.put(rule, new HashSet<Answer>());
-        applieds.get(rule).add(answer);
-
-    }
-
-    private boolean isApplied(Rule rule, Answer answer) {
-        return applieds.containsKey(rule) && applieds.get(rule).contains(answer);
-    }
-
-    private void clearApplied() {
-        for (Rule rule : applieds.keySet()) {
-            applieds.get(rule).clear();
-            if (fired.containsKey(rule))
-                applieds.get(rule).addAll(fired.get(rule));
-        }
-    }
-
-    private void fired(Rule rule, Answer answer) {
-        if (!fired.containsKey(rule))
-            fired.put(rule, new HashSet<Answer>());
-        fired.get(rule).add(answer);
-    }
-
-    private boolean isFired(Rule rule, Answer answer) {
-        return fired.containsKey(rule) && fired.get(rule).contains(answer);
-    }
-
     private void applyNC(Rule rule) {
-        Query q = new Query();
-        q.body = rule.body;
+        CQ q = new CQ();
+        q.body = (Conjunct) rule.body;
         if (!idb.evaluate(q).isEmpty())
             throw new RuntimeException("Chase failure! NC  (" + rule + ") does not hold!");
     }
 
-    private void applyEGD(Rule rule, Answer a) {
+    private void applyEGD(Rule rule) {
+        CQ q = new CQ();
+        q.body = (Conjunct) rule.body;
         EqualityAtom eatom = (EqualityAtom) rule.head;
-        if (!a.mappings.containsKey(eatom.t1) || !a.mappings.containsKey(eatom.t2))
-            throw new RuntimeException("Syntax error! Invalid egds (" + rule + ")");
-        Term c1 = a.mappings.get(eatom.t1);
-        Term c2 = a.mappings.get(eatom.t2);
-        if (c1 == c2)
-            return;
-        if (c1 instanceof Constant && c2 instanceof Constant)
-            throw new RuntimeException("Chase failure! Egd  (" + rule + ") does not hold!");
-        Null n;
-        Term t;
-        if (c1 instanceof Null) {
-            n = (Null) c1;
-            t = c2;
-        } else if (c1 instanceof Null) {
-            n = (Null) c2;
-            t = c1;
-        } else {
-            throw new RuntimeException("Equality values are invalid!");
+        Set<Assignment> evaluates = idb.evaluate(q);
+        for (Assignment a : evaluates) {
+            if (!a.mappings.containsKey(eatom.t1) || !a.mappings.containsKey(eatom.t2))
+                throw new RuntimeException("Syntax error! Invalid egds (" + rule + ")");
+            Term c1 = a.mappings.get(eatom.t1);
+            Term c2 = a.mappings.get(eatom.t2);
+            if (c1 == c2)
+                return;
+            if (c1 instanceof Constant && c2 instanceof Constant)
+                throw new RuntimeException("Chase failure! Egd  (" + rule + ") does not hold!");
+            Null n;
+            Term t;
+            if (c1 instanceof Null) {
+                n = (Null) c1;
+                t = c2;
+            } else if (c2 instanceof Null) {
+                n = (Null) c2;
+                t = c1;
+            } else {
+                throw new RuntimeException("Equality values are invalid!");
+            }
+            replaceWith(n,t);
         }
-        replaceWith(n,t);
     }
 
     private void replaceWith(Null n, Term t) {
@@ -212,7 +195,7 @@ public class Program {
         Fact.checkNullChange(n, t);
     }
 
-    private Fact generate(Atom atom, Answer answer) {
+    private Fact generate(Atom atom, Assignment answer) {
         ArrayList<Term> terms = new ArrayList<>();
         Set<Null> nulls = new HashSet<>();
         for (Term term : atom.terms) {
@@ -228,7 +211,7 @@ public class Program {
                 }
             }
         }
-        Fact fact = Fact.addFact(atom.predicate, terms);
+        Fact fact = Fact.addFact(atom.predicate, terms, answer.level + 1);
         for (Null n : nulls) {
             n.atoms.add(fact);
         }

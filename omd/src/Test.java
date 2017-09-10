@@ -1,6 +1,7 @@
-import ca.mcmaster.mmilani.omd.datalog.Answer;
+import ca.mcmaster.mmilani.omd.datalog.Assignment;
 import ca.mcmaster.mmilani.omd.datalog.Parser;
 import ca.mcmaster.mmilani.omd.datalog.Program;
+import ca.mcmaster.mmilani.omd.datalog.primitives.CQ;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Query;
 
 import java.io.File;
@@ -11,16 +12,13 @@ public class Test {
 
     public static void main(String[] args) throws IOException {
         File file = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\prg.txt");
-        Parser pa = new Parser();
-        pa.initFrom(file);
-        Program p = pa.parseProgram();
+        Program p = Parser.parseProgram(file);
         p.chase();
-        List<Query> queries = pa.parseQueries();
+        List<CQ> queries = Parser.parseQueries(file);
 
-
-        for (Query query : queries) {
+        for (CQ query : queries) {
             System.out.println("query = " + query);
-            for (Answer answer : p.evaluate(query)) {
+            for (Assignment answer : p.evaluate(query)) {
                 System.out.println(answer);
             }
         }

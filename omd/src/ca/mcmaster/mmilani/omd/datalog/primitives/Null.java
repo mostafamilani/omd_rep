@@ -3,32 +3,33 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 import java.util.*;
 
 public class Null extends Term {
-    public static int INDEX = 0;
+    public static int INDEX = 1;
     public boolean frozen = false;
     public boolean confirmed = false;
     public int index = 0;
-    String label;
-    public static Map<String, Null> nulls = new HashMap<>();
+    private static Map<String, Null> nulls = new HashMap<>();
     public Set<Atom> atoms = new HashSet<>();
 
-    @Override
-    public String toString() {
-        return label;
-    }
-
-    private Null(String label) {
-        this.label = label;
+    private Null(String label, int index) {
+        this.label = label; this.index = index;
     }
 
     public static Null invent() {
-        INDEX++;
         String label = "z_" + INDEX;
-        Null n = new Null(label);
+        Null n = new Null(label, INDEX);
+        INDEX++;
         nulls.put(label, n);
         return n;
     }
 
-    public static Null fetch(String s) {
+    public void remove() {
+        if (confirmed)
+            return;
+        INDEX = index;
+        nulls.remove(label);
+    }
+
+    static Null fetch(String s) {
         if (!nulls.containsKey(s))
             throw new RuntimeException("Invalid null label (" + s + ")");
         return nulls.get(s);
@@ -36,7 +37,7 @@ public class Null extends Term {
 
     @Override
     public boolean equals(Object o) {
-        return toString().equals(o.toString());
+        return o instanceof Null && toString().equals(o.toString());
     }
 
     @Override

@@ -4,14 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Constant extends Term {
-    String label;
-    static Map<String, Constant> constants = new HashMap<>();
+    private static Map<String, Constant> constants = new HashMap<>();
 
     private Constant(String label) {
         this.label = label;
     }
 
-    public static Constant fetch(String label) {
+    static Constant fetch(String label) {
         if (!constants.containsKey(label))
             constants.put(label, new Constant(label));
         return constants.get(label);

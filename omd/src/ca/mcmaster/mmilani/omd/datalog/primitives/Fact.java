@@ -5,6 +5,7 @@ import java.util.function.UnaryOperator;
 
 public class Fact extends PositiveAtom {
     static public Map<String, Fact> facts = new HashMap<>();
+    public int level = Integer.MAX_VALUE;
 
     private Fact(Predicate p, List<Term> ts) {
         super(p, ts);
@@ -16,13 +17,15 @@ public class Fact extends PositiveAtom {
         return facts.get(s);
     }
 
-    public static Fact addFact(Predicate predicate, List<Term> terms) {
+    public static Fact addFact(Predicate predicate, List<Term> terms, int level) {
         Fact f = new Fact(predicate, terms);
         String s = f.toString();
         if (!facts.containsKey(s)) {
             facts.put(s, f);
         }
-        return facts.get(s);
+        Fact fact = facts.get(s);
+        fact.level = level;
+        return fact;
     }
 
     public static void checkNullChange(Null n, Term t) {

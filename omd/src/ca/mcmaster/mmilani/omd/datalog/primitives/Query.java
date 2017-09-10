@@ -1,15 +1,19 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import java.util.Iterator;
+import ca.mcmaster.mmilani.omd.datalog.Program;
 
-public class Query extends Rule {
+import java.util.Iterator;
+import java.util.Set;
+
+public abstract class Query<B> extends Rule<B, Atom> {
 
     @Override
     public String toString() {
-        String s = "";
-        for (Atom atom : body) {
-            s += atom + ",";
-        }
-        return s.substring(0, s.length()-1);
+        return body.toString();
+    }
+
+    @Override
+    public void addProgram(Program program) {
+
     }
 }

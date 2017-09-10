@@ -8,61 +8,61 @@ public class Database {
     @Override
     public String toString() {
         if (facts.isEmpty()) return "";
-        String s = "";
+        StringBuilder s = new StringBuilder();
         for (Fact fact : facts) {
-            s += fact + ", ";
+            s.append(fact).append(", ");
         }
         return s.substring(0, s.length()-2);
     }
 
-    Set<Fact> facts = new HashSet<Fact>();
+    Set<Fact> facts = new HashSet<>();
 
-    public Set<Answer> evaluate(Query q) {
-        Set<Answer> answers = new HashSet<>();
-        Answer dummy = new Answer();
+    Set<Assignment> evaluate(Conjunct c) {
+        Set<Assignment> answers = new HashSet<>();
+        Assignment dummy = new Assignment();
         answers.add(dummy);
-        for (Atom qatom : q.body) {
-            Set<Answer> partialAnswers = new HashSet<>();
+        for (Atom atom : c.atoms) {
+            Set<Assignment> partialAnswers = new HashSet<>();
             for (Fact fact : facts) {
-                Answer partial = unify(qatom, fact);
-                if (partial!=null) partialAnswers.add(partial);
+                Assignment partial = SyntacticModifier.unify(atom, fact);
+                if (partial!=null) {
+                    partialAnswers.add(partial);
+                    partial.level = fact.level;
+                }
             }
-            answers = merge(partialAnswers, answers);
+            answers = SyntacticModifier.merge(partialAnswers, answers);
         }
         return answers;
     }
 
-    private Set<Answer> merge(Set<Answer> as1, Set<Answer> as2) {
-        HashSet<Answer> ans = new HashSet<>();
-        for (Answer a1 : as1) {
-            for (Answer a2 : as2) {
-                Answer merge = Answer.merge(a1, a2);
-                if (merge != null) {
-                    ans.add(merge);
-                }
+    Set<Assignment> evaluate(Query q) {
+        Set<Conjunct> cs = new HashSet<>();
+        if (q instanceof CQ) cs.add(((CQ)q).body);
+        else if (q instanceof UCQ) cs.addAll(((UCQ)q).body);
+
+        HashSet<Assignment> evaluations = new HashSet<>();
+        for (Conjunct conjunct : cs) {
+            Set<Assignment> evs = evaluate(conjunct);
+            for (Assignment e : evs) {
+                evaluations.add(filter(e, q.headVariables));
             }
         }
-        return ans;
+        return evaluations;
     }
 
-    private Answer unify(Atom q, Fact f) {
-        if (f.predicate != q.predicate) return null;
-        Answer answer = new Answer();
-        for (int i = 0; i < f.terms.toArray().length; i++) {
-            Term tf = (Term) f.terms.toArray()[i];
-            Term tq = (Term) q.terms.toArray()[i];
-            if (!answer.map(tq, tf))
-                return null;
+    private Assignment filter(Assignment e, Set variables) {
+        Assignment evaluation = new Assignment();
+        for (Term term : e.mappings.keySet()) {
+            if (variables.contains(term))
+                evaluation.mappings.put(term, e.mappings.get(term));
         }
-        return answer;
+        return evaluation;
     }
 
-    protected Database copy() {
+    Database copy() {
         Database database = new Database();
-        database.facts = new HashSet<Fact>();
-        for (Fact fact : facts) {
-            database.facts.add(fact);
-        }
+        database.facts = new HashSet<>();
+        database.facts.addAll(facts);
         return database;
     }
 }

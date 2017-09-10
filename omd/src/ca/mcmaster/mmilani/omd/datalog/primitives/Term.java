@@ -1,20 +1,22 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 public abstract class Term {
-
-    public static Term parse(String s, boolean body, Rule... rule) {
-        Term term = null;
+    String label;
+    static Term parse(String s, boolean body, Rule... owner) {
+        Term term;
         if (s.startsWith("z_")) {
             term = Null.fetch(s);
         } else if (s.contains("'")) {
             term = Constant.fetch(s.replaceAll("'", ""));
         } else {
-            if (rule == null || rule.length == 0)
+            if (owner == null || owner.length == 0)
                 throw new RuntimeException(s);
-            term = rule[0].fetchVariable(s, body);
+            term = owner[0].fetchVariable(s, body);
         }
         return term;
     }
 
-
+    public String toString() {
+        return label;
+    }
 }

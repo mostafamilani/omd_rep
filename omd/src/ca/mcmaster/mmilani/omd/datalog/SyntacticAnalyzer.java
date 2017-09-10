@@ -8,21 +8,21 @@ import java.io.IOException;
 import java.util.*;
 
 public class SyntacticAnalyzer {
-    public static boolean isLinear(Set<Rule> rules) {
-        for (Rule rule : rules) {
+    public static boolean isLinear(Set<TGD> rules) {
+        for (TGD rule : rules) {
             if (!isLinear(rule))
                 return false;
         }
         return true;
     }
 
-    private static boolean isLinear(Rule rule) {
-        return rule.body.size() == 1;
+    private static boolean isLinear(TGD tgd) {
+        return tgd.body.atoms.size() == 1;
     }
 
-    public static boolean isSticky(Set<Rule> rules) {
+    public static boolean isSticky(Set<TGD> rules) {
         findMarkedVariables(rules);
-        for (Rule rule : rules) {
+        for (TGD rule : rules) {
             for (Variable variable : rule.variables.values()) {
                 if (variable.isBodyVariable() && isRepeated(variable) && variable.marked)
                     return false;
@@ -31,14 +31,14 @@ public class SyntacticAnalyzer {
         return true;
     }
 
-    public static boolean isWeaklyAcyclic(Set<Rule> rules) {
+    public static boolean isWeaklyAcyclic(Set<TGD> rules) {
         return getInfinitePositions(rules).isEmpty();
     }
 
-    public static boolean isWeaklySticky(Set<Rule> rules) {
+    public static boolean isWeaklySticky(Set<TGD> rules) {
         findMarkedVariables(rules);
         Set<Position> infinitePositions = getInfinitePositions(rules);
-        for (Rule rule : rules) {
+        for (TGD rule : rules) {
             for (Variable variable : rule.variables.values()) {
                 if (!variable.isBodyVariable()) continue;
                 Set<Position> positions = getBodyPositions(variable, rule);
@@ -49,15 +49,15 @@ public class SyntacticAnalyzer {
         return true;
     }
 
-    private static Set<Position> getInfinitePositions(Set<Rule> rules) {
-        for (Rule rule : rules) {
+    private static Set<Position> getInfinitePositions(Set<TGD> rules) {
+        for (TGD rule : rules) {
             for (Variable variable : rule.variables.values()) {
                 if (!variable.isBodyVariable()) continue;
                 Set<Node> bodyNodes = getNodes(getBodyPositions(variable, rule));
                 Set<Node> headNodes = getNodes(getHeadPositions(variable, rule));
                 for (Node b : bodyNodes) {
                     b.nexts.addAll(headNodes);
-                    for (Variable evar : rule.existentials) {
+                    for (Variable evar : rule.existentialVars) {
                         b.nextSpecials.addAll(getNodes(getHeadPositions(evar, rule)));
                     }
                 }
@@ -105,7 +105,7 @@ public class SyntacticAnalyzer {
         return nodes;
     }
 
-    private static Set<Position> getHeadPositions(Variable variable, Rule rule) {
+    private static Set<Position> getHeadPositions(Variable variable, TGD rule) {
         HashSet<Position> positions = new HashSet<>();
         int pos = 0;
         for (Term term : rule.head.terms) {
@@ -118,9 +118,9 @@ public class SyntacticAnalyzer {
         return positions;
     }
 
-    private static Set<Position> getBodyPositions(Variable variable, Rule rule) {
+    private static Set<Position> getBodyPositions(Variable variable, TGD rule) {
         HashSet<Position> positions = new HashSet<>();
-        for (Atom atom : rule.body) {
+        for (Atom atom : rule.body.atoms) {
             int pos = 0;
             for (Term term : atom.terms) {
                 if (term == variable) {
@@ -133,11 +133,11 @@ public class SyntacticAnalyzer {
         return positions;
     }
 
-    private static void findMarkedVariables(Set<Rule> rules) {
+    private static void findMarkedVariables(Set<TGD> rules) {
         Set<Position> markedPositions = new HashSet<Position>();
-        for (Rule rule : rules) {
+        for (TGD rule : rules) {
             int pos;
-            for (Atom atom : rule.body) {
+            for (Atom atom : rule.body.atoms) {
                 pos = 0;
                 for (Term term : atom.terms) {
                     if (!(term instanceof Variable)) continue;
@@ -154,7 +154,7 @@ public class SyntacticAnalyzer {
         boolean newMarked = true;
         while (newMarked && !markedPositions.isEmpty()) {
             newMarked = false;
-            for (Rule rule : rules) {
+            for (TGD rule : rules) {
                 for (Variable variable : rule.variables.values()) {
                     if (!variable.isBodyVariable()) continue;
                     if (containsAll(markedPositions, getHeadPositions(variable, rule)) && !variable.marked) {
@@ -176,7 +176,7 @@ public class SyntacticAnalyzer {
 
     private static boolean isRepeated(Variable variable) {
         boolean appeared = false;
-        for (Atom atom : variable.rule.body) {
+        for (Atom atom : ((TGD)variable.rule).body.atoms) {
             for (Term term : atom.terms) {
                 if (variable.equals(term)) {
                     if (appeared)
@@ -190,12 +190,11 @@ public class SyntacticAnalyzer {
     }
 
     public static void main(String[] args) throws IOException {
-        Parser p = new Parser();
-        p.initFrom(new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\program.txt"));
-        Program program = p.parseProgram();
-        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.rules));
-        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.rules));
-        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.rules));
-        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.rules));
+        File in = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\program.txt");
+        Program program = Parser.parseProgram(in);
+        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.tgds));
+        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.tgds));
+        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.tgds));
+        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.tgds));
     }
 }
