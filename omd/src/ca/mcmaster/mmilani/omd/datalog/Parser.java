@@ -43,13 +43,12 @@ public class Parser {
         return rule;
     }
 
-    private static Conjunct parseBody(String body, Rule... rule) {
+    public static Conjunct parseBody(String body, Rule... rule) {
         Conjunct conjunct = new Conjunct();
-        conjunct.atoms = new ArrayList<>();
         while (body.length() > 1) {
             String atom = body.substring(0, body.indexOf(")") + 1);
             body = body.substring(body.indexOf(")") + 1, body.length());
-            conjunct.atoms.add(Atom.parse(atom, true, rule));
+            conjunct.add((PositiveAtom) Atom.parse(atom, true, rule));
         }
         return conjunct;
     }
@@ -72,8 +71,9 @@ public class Parser {
         CQ query = new CQ();
         line = line.replaceAll(
                 " ", "");
-        query.body = parseBody(line.substring(0, line.indexOf("?")), query);
+        String body = line.substring(line.indexOf("?-") + 2, line.length()-1);
         String head = line.substring(0, line.indexOf("?-"));
+        query.body = parseBody(body, query);
         query.head = Atom.parse(head, false, query);
         return query;
     }

@@ -17,14 +17,14 @@ public class SyntacticAnalyzer {
     }
 
     private static boolean isLinear(TGD tgd) {
-        return tgd.body.atoms.size() == 1;
+        return tgd.body.getAtoms().size() == 1;
     }
 
-    public static boolean isSticky(Set<TGD> rules) {
-        findMarkedVariables(rules);
-        for (TGD rule : rules) {
-            for (Variable variable : rule.variables.values()) {
-                if (variable.isBodyVariable() && isRepeated(variable) && variable.marked)
+    public static boolean isSticky(Set<TGD> tgds) {
+        findMarkedVariables(tgds);
+        for (TGD tgd : tgds) {
+            for (Variable variable : tgd.variables.values()) {
+                if (variable.isBody() && isRepeated(variable, tgd) && variable.isMarked())
                     return false;
             }
         }
@@ -35,14 +35,14 @@ public class SyntacticAnalyzer {
         return getInfinitePositions(rules).isEmpty();
     }
 
-    public static boolean isWeaklySticky(Set<TGD> rules) {
-        findMarkedVariables(rules);
-        Set<Position> infinitePositions = getInfinitePositions(rules);
-        for (TGD rule : rules) {
-            for (Variable variable : rule.variables.values()) {
-                if (!variable.isBodyVariable()) continue;
-                Set<Position> positions = getBodyPositions(variable, rule);
-                if (isRepeated(variable) && variable.marked && containsAll(infinitePositions, positions))
+    public static boolean isWeaklySticky(Set<TGD> tgds) {
+        findMarkedVariables(tgds);
+        Set<Position> infinitePositions = getInfinitePositions(tgds);
+        for (TGD tgd : tgds) {
+            for (Variable variable : tgd.variables.values()) {
+                if (!variable.isBody()) continue;
+                Set<Position> positions = getBodyPositions(variable, tgd);
+                if (isRepeated(variable, tgd) && variable.isMarked() && containsAll(infinitePositions, positions))
                     return false;
             }
         }
@@ -52,7 +52,7 @@ public class SyntacticAnalyzer {
     private static Set<Position> getInfinitePositions(Set<TGD> rules) {
         for (TGD rule : rules) {
             for (Variable variable : rule.variables.values()) {
-                if (!variable.isBodyVariable()) continue;
+                if (!variable.isBody()) continue;
                 Set<Node> bodyNodes = getNodes(getBodyPositions(variable, rule));
                 Set<Node> headNodes = getNodes(getHeadPositions(variable, rule));
                 for (Node b : bodyNodes) {
@@ -120,7 +120,7 @@ public class SyntacticAnalyzer {
 
     private static Set<Position> getBodyPositions(Variable variable, TGD rule) {
         HashSet<Position> positions = new HashSet<>();
-        for (Atom atom : rule.body.atoms) {
+        for (Atom atom : rule.body.getAtoms()) {
             int pos = 0;
             for (Term term : atom.terms) {
                 if (term == variable) {
@@ -137,14 +137,14 @@ public class SyntacticAnalyzer {
         Set<Position> markedPositions = new HashSet<Position>();
         for (TGD rule : rules) {
             int pos;
-            for (Atom atom : rule.body.atoms) {
+            for (Atom atom : rule.body.getAtoms()) {
                 pos = 0;
                 for (Term term : atom.terms) {
                     if (!(term instanceof Variable)) continue;
                     Variable variable = (Variable) term;
                     Position position = new Position(pos, atom.predicate);
                     if (!rule.headVariables.contains(variable)) {
-                        variable.marked = true;
+                        variable.setMarked(true);
                         markedPositions.add(position);
                     }
                     pos++;
@@ -156,10 +156,10 @@ public class SyntacticAnalyzer {
             newMarked = false;
             for (TGD rule : rules) {
                 for (Variable variable : rule.variables.values()) {
-                    if (!variable.isBodyVariable()) continue;
-                    if (containsAll(markedPositions, getHeadPositions(variable, rule)) && !variable.marked) {
+                    if (!variable.isBody()) continue;
+                    if (containsAll(markedPositions, getHeadPositions(variable, rule)) && !variable.isMarked()) {
                         markedPositions.addAll(getBodyPositions(variable, rule));
-                        variable.marked = true;
+                        variable.setMarked(true);
                         newMarked = true;
                     }
                 }
@@ -174,9 +174,9 @@ public class SyntacticAnalyzer {
         return true;
     }
 
-    private static boolean isRepeated(Variable variable) {
+    private static boolean isRepeated(Variable variable, TGD tgd) {
         boolean appeared = false;
-        for (Atom atom : ((TGD)variable.rule).body.atoms) {
+        for (Atom atom : tgd.body.getAtoms()) {
             for (Term term : atom.terms) {
                 if (variable.equals(term)) {
                     if (appeared)

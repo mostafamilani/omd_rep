@@ -7,15 +7,18 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.Variable;
 import java.util.*;
 
 public class Assignment {
-    Map<Term, Term> mappings = new HashMap<>();
+    private Map<Term, Term> mappings = new HashMap<>();
     int level = 0;
 
-    boolean map(Term tq, Term tf) {
-        if (tq instanceof Constant) return tq == tf;
-        if (mappings.containsKey(tq) && mappings.get(tq) != tf) {
+    public boolean tryToMap(Term t1, Term t2) {
+        if (t1 instanceof Variable && ((Variable) t1).dontCare()) return true;
+        if (t1 instanceof Constant) {
+            return t1 == t2;
+        }
+        if (mappings.containsKey(t1) && mappings.get(t1) != t2) {
             return false;
         } else {
-            mappings.put((Variable) tq, tf);
+            mappings.put(t1, t2);
             return true;
         }
     }
@@ -29,23 +32,8 @@ public class Assignment {
         return s + "\n";
     }
 
-    public boolean compatible(Assignment a) {
-        for (Term t : a.mappings.keySet()) {
-            if (this.mappings.containsKey(t) && this.mappings.get(t) != a.mappings.get(t)) return false;
-        }
-        return true;
-    }
-
-    public void merge(Assignment a) {
-//        if (!compatible(a)) return;
-        for (Term t : a.mappings.keySet()) {
-            this.mappings.put(t, a.mappings.get(t));
-        }
-        this.level = Math.max(this.level, a.level);
-    }
-
     @Override
-    protected Object clone() {
+    public Object clone() {
         Assignment assignment = new Assignment();
         assignment.level = this.level;
         assignment.mappings = new HashMap<>();
@@ -71,5 +59,21 @@ public class Assignment {
     @Override
     public int hashCode() {
         return (this + "").hashCode();
+    }
+
+    public Map<Term, Term> getMappings() {
+        return Collections.unmodifiableMap(mappings);
+    }
+
+    public void put(Term v1, Term v2) {
+        mappings.put(v1, v2);
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 }

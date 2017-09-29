@@ -9,7 +9,7 @@ public abstract class Query<B> extends Rule<B, Atom> {
 
     @Override
     public String toString() {
-        return body.toString();
+        return head.toString() + "?-" + body.toString();
     }
 
     @Override

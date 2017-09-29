@@ -1,6 +1,8 @@
 package ca.mcmaster.mmilani.omd.datalog;
 
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
+import ca.mcmaster.mmilani.omd.datalog.tools.syntax.AssignmentGadget;
+import ca.mcmaster.mmilani.omd.datalog.tools.syntax.AtomGadget;
 
 import java.util.*;
 
@@ -21,16 +23,16 @@ public class Database {
         Set<Assignment> answers = new HashSet<>();
         Assignment dummy = new Assignment();
         answers.add(dummy);
-        for (Atom atom : c.atoms) {
+        for (Atom atom : c.getAtoms()) {
             Set<Assignment> partialAnswers = new HashSet<>();
             for (Fact fact : facts) {
-                Assignment partial = SyntacticModifier.unify(atom, fact);
+                Assignment partial = AtomGadget.mapTo(atom, fact);
                 if (partial!=null) {
                     partialAnswers.add(partial);
                     partial.level = fact.level;
                 }
             }
-            answers = SyntacticModifier.merge(partialAnswers, answers);
+            answers = AssignmentGadget.merge(partialAnswers, answers);
         }
         return answers;
     }
@@ -52,9 +54,9 @@ public class Database {
 
     private Assignment filter(Assignment e, Set variables) {
         Assignment evaluation = new Assignment();
-        for (Term term : e.mappings.keySet()) {
+        for (Term term : e.getMappings().keySet()) {
             if (variables.contains(term))
-                evaluation.mappings.put(term, e.mappings.get(term));
+                evaluation.put(term, e.getMappings().get(term));
         }
         return evaluation;
     }

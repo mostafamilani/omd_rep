@@ -158,10 +158,10 @@ public class Program {
         EqualityAtom eatom = (EqualityAtom) rule.head;
         Set<Assignment> evaluates = idb.evaluate(q);
         for (Assignment a : evaluates) {
-            if (!a.mappings.containsKey(eatom.t1) || !a.mappings.containsKey(eatom.t2))
+            if (!a.getMappings().containsKey(eatom.t1) || !a.getMappings().containsKey(eatom.t2))
                 throw new RuntimeException("Syntax error! Invalid egds (" + rule + ")");
-            Term c1 = a.mappings.get(eatom.t1);
-            Term c2 = a.mappings.get(eatom.t2);
+            Term c1 = a.getMappings().get(eatom.t1);
+            Term c2 = a.getMappings().get(eatom.t2);
             if (c1 == c2)
                 return;
             if (c1 instanceof Constant && c2 instanceof Constant)
@@ -202,8 +202,8 @@ public class Program {
             if (term instanceof Constant)
                 terms.add(term);
             else if (term instanceof Variable) {
-                if (answer.mappings.containsKey(term))
-                    terms.add(answer.mappings.get(term));
+                if (answer.getMappings().containsKey(term))
+                    terms.add(answer.getMappings().get(term));
                 else {
                     Null n = Null.invent();
                     terms.add(n);

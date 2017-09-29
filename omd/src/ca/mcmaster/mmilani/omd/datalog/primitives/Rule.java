@@ -10,15 +10,7 @@ public abstract class Rule<B,H> {
     public Map<String, Variable> variables = new HashMap<>();
     public Set<Variable> headVariables = new HashSet<>();
 
-    Variable fetchVariable(String name, boolean body) {
-        if (!variables.containsKey(name)) {
-            variables.put(name, new Variable(name, this));
-        }
-        if (!body) {
-            headVariables.add(variables.get(name));
-        }
-        return variables.get(name);
-    }
-
     public abstract void addProgram(Program program);
+
+    public abstract Variable fetchVariable(String s, boolean body);
 }

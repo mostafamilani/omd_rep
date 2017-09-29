@@ -1,5 +1,7 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
+import ca.mcmaster.mmilani.omd.datalog.Assignment;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -10,17 +12,15 @@ public class PositiveAtom extends Atom {
         super(p, ts);
     }
 
-    @Override
-    protected Object clone() {
+    public PositiveAtom apply(Assignment assignment) {
         ArrayList<Term> ts = new ArrayList<>();
         for (Term term : terms) {
             if (term instanceof Constant)
                 ts.add(term);
             else if (term instanceof Variable) {
-                ts.add(new Variable(term.label, null));
+                ts.add(assignment.getMappings().getOrDefault(term, term));
             }
         }
-        PositiveAtom atom = new PositiveAtom(predicate, ts);
-        return atom;
+        return new PositiveAtom(predicate, ts);
     }
 }

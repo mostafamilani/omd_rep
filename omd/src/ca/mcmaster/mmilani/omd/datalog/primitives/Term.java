@@ -8,6 +8,8 @@ public abstract class Term {
             term = Null.fetch(s);
         } else if (s.contains("'")) {
             term = Constant.fetch(s.replaceAll("'", ""));
+        } else if (s.equals(Variable.DONT_CARE)) {
+            term = Variable.getDontCare();
         } else {
             if (owner == null || owner.length == 0)
                 throw new RuntimeException(s);

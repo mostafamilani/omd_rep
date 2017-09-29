@@ -1,8 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public abstract class Atom {
     public Predicate predicate;
@@ -62,5 +60,30 @@ public abstract class Atom {
     @Override
     public int hashCode() {
         return (this + "").hashCode();
+    }
+
+    public static boolean equalsMasked(Atom a1, Atom a2) {
+        if (a1.equals(a2)) return true;
+        if (a1.predicate != a2.predicate || a1.terms.size() != a2.terms.size()) return false;
+        for (int i = 0; i < a1.terms.size(); i++) {
+            Term t1 = a1.terms.get(i);
+            Term t2 = a2.terms.get(i);
+            if (!t1.equals(t2)) {
+                if ((t1 instanceof Variable && ((Variable) t1).dontCare()) ||
+                        (t2 instanceof Variable && ((Variable) t2).dontCare()))
+                    continue;
+                return false;
+            };
+        }
+        return true;
+    }
+
+    public Set<Variable> getVariables() {
+        HashSet<Variable> variables = new HashSet<>();
+        for (Term term : terms) {
+            if (term instanceof Variable)
+                variables.add((Variable) term);
+        }
+        return variables;
     }
 }
