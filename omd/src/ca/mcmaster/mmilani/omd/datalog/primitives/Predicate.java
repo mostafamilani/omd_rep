@@ -37,4 +37,8 @@ public class Predicate {
     public String toString() {
         return name;
     }
+
+    public static Predicate fetchAdornedPredicate(Predicate predicate, StringBuilder adornment) {
+        return fetch(predicate.name + "_" + adornment, predicate.arity);
+    }
 }
