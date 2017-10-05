@@ -1,8 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class Predicate {
     public String name;
@@ -10,12 +8,12 @@ public class Predicate {
 
     static Map<String, Predicate> predicates = new HashMap<>();
 
-    public Predicate(String name, int arity) {
+    private Predicate(String name, int arity) {
         this.name = name;
         this.arity = arity;
     }
 
-    public static Predicate fetch(String name, int arity) {
+    static Predicate fetch(String name, int arity) {
         if (!predicates.containsKey(name))
             predicates.put(name, new Predicate(name, arity));
         Predicate predicate = predicates.get(name);
@@ -38,7 +36,35 @@ public class Predicate {
         return name;
     }
 
-    public static Predicate fetchAdornedPredicate(Predicate predicate, StringBuilder adornment) {
-        return fetch(predicate.name + "_" + adornment, predicate.arity);
+    public Predicate fetchAdornedPredicate(String adornment) {
+        if (isAdorned())
+            return null;
+        return fetch(name + "^" + adornment, arity);
+    }
+
+    private boolean isAdorned() {
+        return name.contains("^");
+    }
+
+    public Predicate fetchSimplePredicate() {
+        if (!isAdorned())
+            return null;
+        return fetch(name.substring(0, name.indexOf("^")), arity);
+    }
+
+    public Set<Predicate> allAdorned() {
+        HashSet<Predicate> result = new HashSet<>();
+        for (Predicate predicate : predicates.values()) {
+            if (predicate.name.contains(name + "^")) {
+                result.add(predicate);
+            }
+        }
+        return result;
+    }
+
+    public String getAdornment() {
+        if (!isAdorned())
+            return null;
+        return name.substring(name.indexOf("^") + 1, name.length());
     }
 }

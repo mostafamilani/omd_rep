@@ -16,7 +16,7 @@ public class Program {
     private Set<ApplicablePair> applieds = new HashSet<>();
     private Set<ApplicablePair> blockeds = new HashSet<>();
 
-    private Database idb;
+    private Database idb = new Database();
 
     public Set<Assignment> evaluate(Query q) {
         return idb.evaluate(q);
@@ -216,5 +216,14 @@ public class Program {
             n.atoms.add(fact);
         }
         return fact;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        for (TGD tgd : tgds) {
+            s.append(tgd).append("\n");
+        }
+        return s.toString();
     }
 }

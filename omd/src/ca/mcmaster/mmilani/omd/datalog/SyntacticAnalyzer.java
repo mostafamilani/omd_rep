@@ -190,11 +190,19 @@ public class SyntacticAnalyzer {
     }
 
     public static void main(String[] args) throws IOException {
-        File in = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\program.txt");
+        File in = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\rewrite.txt");
         Program program = Parser.parseProgram(in);
-        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.tgds));
-        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.tgds));
-        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.tgds));
-        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.tgds));
+//        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.tgds));
+//        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.tgds));
+//        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.tgds));
+//        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.tgds));
+        List<CQ> cqs = Parser.parseQueries(in);
+        CQ cq = cqs.get(0);
+        MagicSetGadget.rewrite(program, cq);
+        program.chase();
+        Set<Assignment> evaluate = program.evaluate(cq);
+        for (Assignment assignment : evaluate) {
+            System.out.println("assignment = " + assignment);
+        }
     }
 }
