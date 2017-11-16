@@ -11,7 +11,7 @@ import java.util.*;
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\prg.txt");
+        File file = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\prg-2.txt");
         Program p = Parser.parseProgram(file);
         p.chase();
         List<CQ> queries = Parser.parseQueries(file);

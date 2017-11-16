@@ -1,2 +1,6 @@
-p(y,z) :- p(x,y).
-q(x,w) ?- p(x,y),p(y,z),p(z,w).
+mother('a','b').
+parent(x,y) :- mother(x,y).
+parent(x,y) :- father(x,y).
+ancestor(x,y) :- parent(x,y).
+ancestor(x,z) :- parent(x,y),parent(y,z).
+answer(x) ?- ancestor('Julia',x).

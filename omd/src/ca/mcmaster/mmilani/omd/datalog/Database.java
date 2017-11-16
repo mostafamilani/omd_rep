@@ -46,7 +46,8 @@ public class Database {
         for (Conjunct conjunct : cs) {
             Set<Assignment> evs = evaluate(conjunct);
             for (Assignment e : evs) {
-                evaluations.add(filter(e, q.headVariables));
+                Assignment filter = filter(e, q.headVariables);
+                if (filter != null) evaluations.add(filter);
             }
         }
         return evaluations;
@@ -55,8 +56,11 @@ public class Database {
     private Assignment filter(Assignment e, Set variables) {
         Assignment evaluation = new Assignment();
         for (Term term : e.getMappings().keySet()) {
-            if (variables.contains(term))
-                evaluation.put(term, e.getMappings().get(term));
+            if (variables.contains(term)) {
+                Term mapTo = e.getMappings().get(term);
+                if (!(mapTo instanceof Constant)) return null;
+                evaluation.put(term, mapTo);
+            }
         }
         return evaluation;
     }
