@@ -77,4 +77,12 @@ public class Parser {
         query.head = Atom.parse(head, false, query);
         return query;
     }
+
+    public static void main(String[] args) {
+        char c = 1;
+        for (int i = 0; i < 1000; i++) {
+            System.out.println("c = " + c);
+            c++;
+        }
+    }
 }

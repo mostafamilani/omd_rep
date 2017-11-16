@@ -46,6 +46,8 @@ public class Predicate {
         return name.contains("^");
     }
 
+    public boolean isMagic() { return name.startsWith("m_"); }
+
     public Predicate fetchSimplePredicate() {
         if (!isAdorned())
             return null;
@@ -66,5 +68,14 @@ public class Predicate {
         if (!isAdorned())
             return null;
         return name.substring(name.indexOf("^") + 1, name.length());
+    }
+
+    public Predicate fetchMagicPredicate() {
+        if (!isAdorned())
+            return null;
+        Predicate p = fetchSimplePredicate();
+
+        String adornment = getAdornment();
+        return fetch("m_" + p.name + "^" + adornment, adornment.replaceAll("b", "").length());
     }
 }

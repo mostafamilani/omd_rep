@@ -3,6 +3,7 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Variable extends Term {
     static int index = 0;
@@ -25,7 +26,7 @@ public class Variable extends Term {
 
     public static Variable fetchNewVariable() {
         index++;
-        return fetchVariable("x_" + index);
+        return fetchVariable("@" + Integer.toHexString(index));
     }
 
     public boolean isBody() {

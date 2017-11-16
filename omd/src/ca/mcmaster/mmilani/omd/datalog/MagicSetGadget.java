@@ -27,11 +27,60 @@ public class MagicSetGadget {
             }
             newPredicates.remove(adornedPredicate);
         }
+        Set<Predicate> magicPredicates = addMagicPredicates(adornedRules);
+        Set<TGD> magicRules = generateMagicRules(adornedRules, magicPredicates);
         program.tgds.addAll(adornedRules);
+        program.tgds.addAll(generateLoadingRules(adornedPredicates));
+    }
 
-        for (Predicate adorned : adornedPredicates) {
-            program.tgds.add(generateLoadingRule(adorned));
+    private static Set<TGD> generateMagicRules(Set<TGD> adornedRules, Set<Predicate> magicPredicates) {
+        HashSet<TGD> magicRules = new HashSet<>();
+        for (TGD adornedRule : adornedRules) {
+            List<PositiveAtom> atoms = adornedRule.body.getAtoms();
+            PositiveAtom magicAtom = atoms.get(0);
+            for (int i = 1; i < atoms.size(); i++) {
+                TGD magicRule = getMagicRule(atoms.get(i), magicAtom);
+                magicRules.add(magicRule);
+                magicAtom = (PositiveAtom) magicRule.head;
+            }
         }
+        return magicRules;
+    }
+
+    private static TGD getMagicRule(PositiveAtom atom, PositiveAtom magicAtom) {
+        return null;
+    }
+
+    private static Set<Predicate> addMagicPredicates(Set<TGD> adornedRules) {
+        HashSet<Predicate> magicPredicates = new HashSet<>();
+        for (TGD adornedRule : adornedRules) {
+            Predicate magicPredicate = adornedRule.head.predicate.fetchMagicPredicate();
+            List<Term> variables = getFreeVariables(adornedRule.head);
+            PositiveAtom magicAtom = new PositiveAtom(magicPredicate, variables);
+            adornedRule.body.addFirst(magicAtom);
+            magicPredicates.add(magicPredicate);
+        }
+        return magicPredicates;
+    }
+
+    private static List<Term> getFreeVariables(Atom adornedAtom) {
+        ArrayList<Term> terms = new ArrayList<>();
+        int i = 0;
+        for (Term term : adornedAtom.terms) {
+            Variable v = (Variable) term;
+            String adornment = adornedAtom.predicate.getAdornment();
+            if (adornment.charAt(i) == 'f')
+                terms.add(v);
+        }
+        return terms;
+    }
+
+    private static Set<TGD> generateLoadingRules(Set<Predicate> adornedPredicates) {
+        Set<TGD> loadingRules = new HashSet<>();
+        for (Predicate adorned : adornedPredicates) {
+            loadingRules.add(generateLoadingRule(adorned));
+        }
+        return loadingRules;
     }
 
     private static TGD generateAdornedTGD(TGD tgd, Predicate adornedPredicate) {

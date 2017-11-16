@@ -69,6 +69,10 @@ public class Conjunct {
         return variables;
     }
 
+    public void addFirst(PositiveAtom atom) {
+        atoms.add(0, atom);
+    }
+
     /*@Override
     public Object clone() {
         Conjunct c = new Conjunct();
