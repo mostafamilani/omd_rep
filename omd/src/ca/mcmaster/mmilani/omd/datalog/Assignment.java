@@ -7,7 +7,7 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.Variable;
 import java.util.*;
 
 public class Assignment {
-    private Map<Term, Term> mappings = new HashMap<>();
+    public Map<Term, Term> mappings = new HashMap<>();
     int level = 0;
 
     public boolean tryToMap(Term t1, Term t2) {

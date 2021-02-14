@@ -11,7 +11,10 @@ public class CQ extends Query<Conjunct> {
         Variable variable = variables.get(s);
         if (!body)
             headVariables.add(variable);
-        variable.setBody(body);
+        if (body)
+            variable.setBody();
+        else
+            variable.setHead();
         variable.setExistential(existential);
         return variable;
     }

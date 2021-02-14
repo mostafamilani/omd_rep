@@ -19,7 +19,10 @@ public class EGD extends Rule<Conjunct, EqualityAtom> {
         Variable variable = variables.get(s);
         if (!body)
             headVariables.add(variable);
-        variable.setBody(body);
+        if (body)
+            variable.setBody();
+        else
+            variable.setHead();
         variable.setExistential(existential);
         return variable;
     }

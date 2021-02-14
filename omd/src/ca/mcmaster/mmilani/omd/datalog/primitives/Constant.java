@@ -10,7 +10,7 @@ public class Constant extends Term {
         this.label = label;
     }
 
-    static Constant fetch(String label) {
+    public static Constant fetch(String label) {
         if (!constants.containsKey(label))
             constants.put(label, new Constant(label));
         return constants.get(label);

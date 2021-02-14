@@ -2,7 +2,9 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 import ca.mcmaster.mmilani.omd.datalog.Program;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public class TGD extends Rule<Conjunct, Atom> {
@@ -23,7 +25,10 @@ public class TGD extends Rule<Conjunct, Atom> {
         Variable variable = variables.get(s);
         if (!body)
             headVariables.add(variable);
-        variable.setBody(body);
+        if (body)
+            variable.setBody();
+        else
+            variable.setHead();
         variable.setExistential(existential);
         return variable;
     }
@@ -32,4 +37,5 @@ public class TGD extends Rule<Conjunct, Atom> {
     public String toString() {
         return head + ":-" + body;
     }
+
 }

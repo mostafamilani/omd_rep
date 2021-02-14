@@ -1,5 +1,7 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
+//import ca.mcmaster.mmilani.omd.datalog.Program;
+
 import ca.mcmaster.mmilani.omd.datalog.Program;
 
 import java.util.*;

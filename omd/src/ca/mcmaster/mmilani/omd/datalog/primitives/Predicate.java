@@ -6,7 +6,7 @@ public class Predicate {
     public String name;
     public int arity;
 
-    static Map<String, Predicate> predicates = new HashMap<>();
+    public static Map<String, Predicate> predicates = new HashMap<>();
 
     private Predicate(String name, int arity) {
         this.name = name;

@@ -3,9 +3,10 @@ package ca.mcmaster.mmilani.omd.datalog;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+
+import static ca.mcmaster.mmilani.omd.datalog.TerminationAnalyzer.terminates;
 
 public class SyntacticAnalyzer {
     public static boolean isLinear(Set<TGD> rules) {
@@ -14,6 +15,22 @@ public class SyntacticAnalyzer {
                 return false;
         }
         return true;
+    }
+
+    public static boolean isSimpleLinear(Set<TGD> rules) {
+        for (TGD rule : rules) {
+            if (!isLinear(rule) || hasRepeatedVariable(rule))
+                return false;
+        }
+        return true;
+    }
+
+    private static boolean hasRepeatedVariable(TGD tgd) {
+        for (Variable variable : tgd.variables.values()) {
+            if (variable.isBody() && isRepeated(variable, tgd))
+                return true;
+        }
+        return false;
     }
 
     private static boolean isLinear(TGD tgd) {
@@ -32,12 +49,14 @@ public class SyntacticAnalyzer {
     }
 
     public static boolean isWeaklyAcyclic(Set<TGD> rules) {
-        return getInfinitePositions(rules).isEmpty();
+        Map<Position, Node> dGraph = buildDependencyGraph(rules);
+        return getInfiniteRankPositions(dGraph).isEmpty();
     }
 
     public static boolean isWeaklySticky(Set<TGD> tgds) {
         findMarkedVariables(tgds);
-        Set<Position> infinitePositions = getInfinitePositions(tgds);
+        Map<Position, Node> dGraph = buildDependencyGraph(tgds);
+        Set<Position> infinitePositions = getInfiniteRankPositions(dGraph);
         for (TGD tgd : tgds) {
             for (Variable variable : tgd.variables.values()) {
                 if (!variable.isBody()) continue;
@@ -49,58 +68,84 @@ public class SyntacticAnalyzer {
         return true;
     }
 
-    private static Set<Position> getInfinitePositions(Set<TGD> rules) {
-        for (TGD rule : rules) {
-            for (Variable variable : rule.variables.values()) {
-                if (!variable.isBody()) continue;
-                Set<Node> bodyNodes = getNodes(getBodyPositions(variable, rule));
-                Set<Node> headNodes = getNodes(getHeadPositions(variable, rule));
-                for (Node b : bodyNodes) {
-                    b.nexts.addAll(headNodes);
-                    for (Variable evar : rule.existentialVars) {
-                        b.nextSpecials.addAll(getNodes(getHeadPositions(evar, rule)));
-                    }
-                }
-            }
-        }
+    public static Set<Position> getInfiniteRankPositions(Map<Position, Node> dGraph) {
         HashSet<Position> positions = new HashSet<>();
-        for (Node node : Node.nodes.values()) {
-            if (specialPath(node, node)) {
+        for (Node node : dGraph.values()) {
+            if (isPathBetween(node, node) == 2) {
+                if (!positions.contains(node.p)) System.out.println(node.p + " has infinite rank.");
                 positions.add(node.p);
             }
         }
         return positions;
     }
 
-    private static boolean specialPath(Node n1, Node n2) {
-        Set<Node> visited = new HashSet<Node>();
-        Node cnode = n1;
-        boolean special = false;
-        while (true) {
-            Node next = null;
-            visited.add(cnode);
-            for (Node n : cnode.nexts) {
-                if (n == n2 && special) return true;
-                if (!visited.contains(n)) next = n;
-            }
-            for (Node n : cnode.nextSpecials) {
-                if (n == n2 && special) return true;
-                if (!visited.contains(n)) {
-                    next = n;
-                    special = true;
+    public static Map<Position, Node> buildDependencyGraph(Set<TGD> rules) {
+        HashMap<Position, Node> graph = new HashMap<>();
+        for (TGD rule : rules) {
+            for (Variable variable : rule.variables.values()) {
+                if (!variable.isBody()) continue;
+                Set<Node> bodyNodes = fetchNode(graph, getBodyPositions(variable, rule));
+                Set<Node> headNodes = fetchNode(graph, getHeadPositions(variable, rule));
+                for (Node b : bodyNodes) {
+                    b.nexts.addAll(headNodes);
+                    for (Variable evar : rule.existentialVars) {
+                        b.nextSpecials.addAll(fetchNode(graph, getHeadPositions(evar, rule)));
+                    }
                 }
             }
-            if (next != null)
-                cnode = next;
-            else
-                return false;
         }
+        return graph;
     }
 
-    private static Set<Node> getNodes(Set<Position> positions) {
+    private static int isPathBetween(Node n1, Node n2) {
+        Set<Node> visited = new HashSet<>();
+        return isPathBetween(n1, n2, visited);
+    }
+
+    private static int isPathBetween(Node n1, Node n2, Set<Node> visited) {
+        Set<Node> nexts = new HashSet<>(n1.nexts);
+        nexts.addAll(n1.nextSpecials);
+        for (Node next : nexts) {
+            boolean special = n1.nextSpecials.contains(next);
+            if (next.equals(n2)) {
+                visited.add(n2);
+                return special? 2 : 1;
+            }
+            if (!visited.contains(next)){
+                visited.add(next);
+                int path = isPathBetween(next, n2, visited);
+                if (path == 2)
+                    return 2;
+                else if (path == 1)
+                    return special? 2 : 1;
+            }
+        }
+        return 0;
+    }
+
+    public static Set<Position> findAncestors(Set<Node> graph, Position position) {
+        HashSet<Position> positions = new HashSet<>();
+        for (Node next : graph) {
+            if (isPathBetween(next, new Node(position)) > 0) {
+                positions.add(next.p);
+            }
+        }
+        return positions;
+    }
+
+    public static Set<Position> findAncestors(Set<Node> graph, Set<Position> positions) {
+        HashSet<Position> result = new HashSet<>();
+        for (Position position : positions) {
+            result.addAll(findAncestors(graph, position));
+        }
+        return result;
+    }
+
+    private static Set<Node> fetchNode(Map<Position, Node> graph, Set<Position> positions) {
         HashSet<Node> nodes = new HashSet<>();
         for (Position position : positions) {
-            nodes.add(Node.fetchNode(position));
+            if (!graph.containsKey(position)) graph.put(position, new Node(position));
+            nodes.add(graph.get(position));
         }
         return nodes;
     }
@@ -189,7 +234,7 @@ public class SyntacticAnalyzer {
         return false;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         File in = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\rewrite.txt");
         Program program = Parser.parseProgram(in);
 //        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.tgds));
@@ -204,5 +249,17 @@ public class SyntacticAnalyzer {
         for (Assignment assignment : evaluate) {
             System.out.println("assignment = " + assignment);
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\linear.txt");
+        Program program = Parser.parseProgram(in);
+        System.out.println("isSimpleLinear(program.tgds) = " + isSimpleLinear(program.tgds));
+        System.out.println("isLinear(program.tgds) = " + isLinear(program.tgds));
+        System.out.println("terminates(program) = " + terminates(program));
+        /*Map<Position, Node> graph = buildDependencyGraph(program.tgds);
+        Node n1 = graph.get(new Position(1, Predicate.predicates.get("r")));
+        Node n2 = graph.get(new Position(0, Predicate.predicates.get("r")));
+        System.out.println("isPathBetween(n1,n2) = " + isPathBetween(n1, n2));*/
     }
 }

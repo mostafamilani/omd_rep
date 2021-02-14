@@ -1,8 +1,8 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 public abstract class Term {
-    String label;
-    static Term parse(String s, boolean body, Rule... owner) {
+    public String label;
+    public static Term parse(String s, boolean body, Rule... owner) {
         Term term;
         if (s.startsWith("z_")) {
             term = Null.fetch(s);

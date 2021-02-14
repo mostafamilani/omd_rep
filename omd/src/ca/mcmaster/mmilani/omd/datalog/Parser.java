@@ -4,6 +4,7 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class Parser {
@@ -39,6 +40,11 @@ public class Parser {
         if (rule instanceof EGD || rule instanceof TGD) {
             head = line.substring(0, line.indexOf(":-"));
             rule.head = Atom.parse(head, false, rule);
+            if (rule instanceof TGD) {
+                TGD tgd = (TGD) rule;
+                tgd.existentialVars = new HashSet<>(tgd.headVariables);
+                tgd.existentialVars.removeAll(tgd.body.getVariables());
+            }
         }
         return rule;
     }

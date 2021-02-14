@@ -67,7 +67,7 @@ public class Database {
 
     Database copy() {
         Database database = new Database();
-        database.facts = new HashSet<>();
+        database.facts = new HashSet();
         database.facts.addAll(facts);
         return database;
     }

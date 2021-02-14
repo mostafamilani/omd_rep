@@ -12,7 +12,6 @@ public abstract class Query<B> extends Rule<B, Atom> {
         return head.toString() + "?-" + body.toString();
     }
 
-    @Override
     public void addProgram(Program program) {
 
     }

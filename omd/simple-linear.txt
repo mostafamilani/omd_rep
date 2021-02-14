@@ -1,0 +1,7 @@
+s(x,z) :- r(x,y,z).
+r(y,x,z) :- q(y,x).
+q(y,x) :- p(y,x).
+p(y,x) :- s(y,x).
+s(y,x) :- t(y,x).
+t(y,x) :- w(y,x).
+w('a','b').

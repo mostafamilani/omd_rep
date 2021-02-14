@@ -7,13 +7,14 @@ import java.util.UUID;
 
 public class Variable extends Term {
     static int index = 0;
-    boolean body;
+    boolean body = false;
+    boolean head = false;
     boolean existential;
     boolean marked;
 
     final static String DONT_CARE = "*";
 
-    static Map<String, Variable> variables = new HashMap<>();
+    public static Map<String, Variable> variables = new HashMap<>();
 
     private Variable(String name) {
         this.label = name;
@@ -41,8 +42,8 @@ public class Variable extends Term {
         return marked;
     }
 
-    public void setBody(boolean body) {
-        this.body = body;
+    public void setBody() {
+        this.body = true;
     }
 
     public void setExistential(boolean existential) {
@@ -59,6 +60,14 @@ public class Variable extends Term {
 
     public static Variable getDontCare() {
         return fetchVariable(DONT_CARE);
+    }
+
+    public boolean isHead() {
+        return head;
+    }
+
+    public void setHead() {
+        this.head = true;
     }
 
     @Override

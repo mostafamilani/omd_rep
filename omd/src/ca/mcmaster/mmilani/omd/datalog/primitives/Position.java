@@ -1,8 +1,9 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 public class Position {
+    private static final int MAX_PREDICATE_COUNT = 1000;
     int pos;
-    Predicate predicate;
+    public Predicate predicate;
 
     public Position(int pos, Predicate predicate) {
         this.pos = pos;
@@ -15,14 +16,12 @@ public class Position {
         if (o == null || getClass() != o.getClass()) return false;
 
         Position position = (Position) o;
-
-        if (pos != position.pos) return false;
-        return predicate != null ? predicate.equals(position.predicate) : position.predicate == null;
+        return this.predicate == position.predicate && this.pos == position.pos;
     }
 
     @Override
     public int hashCode() {
-        return Predicate.predicates.values().size() * predicate.hashCode() + pos;
+        return MAX_PREDICATE_COUNT * predicate.hashCode() + pos;
     }
 
     @Override
