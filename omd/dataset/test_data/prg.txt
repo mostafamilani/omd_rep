@@ -1,0 +1,8 @@
+p(x,z) :- p(x,y),p(y,z)
+%r(y,x,z) :- s(x,y)
+%:- p('e',x)
+%y=z :- s(x,y),s(x,z)
+p('a','b')
+p('b','c')
+p('c','d')
+q(x,y) ?- p(x,y)

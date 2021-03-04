@@ -1,0 +1,4 @@
+acgt:DifferentiationClass(Y) :- acgt:TumorGradeAssessment(X), acgt:reveals(X,Y)
+acgt:MalignNeoplasm(X) :- acgt:DysontogeneticTumor(X)
+!Ex0 ro:precedes(X,Ex0),span:Process(Ex0) :- acgt:DifferentiationClass(X)
+!Ex0 acgt:reveals(X,Ex0) :- span:Process(X)

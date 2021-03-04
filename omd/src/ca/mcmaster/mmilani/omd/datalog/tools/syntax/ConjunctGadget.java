@@ -101,8 +101,8 @@ public class ConjunctGadget {
 //            String s2 = reader.next();
             CQ q1 = new CQ();
             CQ q2 = new CQ();
-            Conjunct c1 = Parser.parseBody(s1, q1);
-            Conjunct c2 = Parser.parseBody(s2, q2);
+            Conjunct c1 = Parser.parseConjunct(s1, true, q1);
+            Conjunct c2 = Parser.parseConjunct(s2, true, q2);
             boolean b1 = mapTo(c1, c2);
             boolean b2 = mapTo(c2, c1);
             System.out.println(c1 + " -> " + c2 + " : " + b1);

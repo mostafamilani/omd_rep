@@ -41,7 +41,7 @@ public class MagicSetGadget {
             for (int i = 1; i < atoms.size(); i++) {
                 TGD magicRule = getMagicRule(atoms.get(i), magicAtom);
                 magicRules.add(magicRule);
-                magicAtom = (PositiveAtom) magicRule.head;
+                magicAtom = magicRule.head.getAtoms().get(0);
             }
         }
         return magicRules;
@@ -54,8 +54,8 @@ public class MagicSetGadget {
     private static Set<Predicate> addMagicPredicates(Set<TGD> adornedRules) {
         HashSet<Predicate> magicPredicates = new HashSet<>();
         for (TGD adornedRule : adornedRules) {
-            Predicate magicPredicate = adornedRule.head.predicate.fetchMagicPredicate();
-            List<Term> variables = getFreeVariables(adornedRule.head);
+            Predicate magicPredicate = adornedRule.head.getAtoms().get(0).predicate.fetchMagicPredicate();
+            List<Term> variables = getFreeVariables(adornedRule.head.getAtoms().get(0));
             PositiveAtom magicAtom = new PositiveAtom(magicPredicate, variables);
             adornedRule.body.addFirst(magicAtom);
             magicPredicates.add(magicPredicate);
@@ -84,7 +84,7 @@ public class MagicSetGadget {
     }
 
     private static TGD generateAdornedTGD(TGD tgd, Predicate adornedPredicate) {
-        if (tgd.head.predicate != adornedPredicate.fetchSimplePredicate())
+        if (tgd.head.getAtoms().get(0).predicate != adornedPredicate.fetchSimplePredicate())
             return null;
         TGD result = new TGD();
         Set<Variable> boundedVariables = new HashSet<>();
@@ -94,7 +94,7 @@ public class MagicSetGadget {
         List<Term> terms = new ArrayList<>();
         for (int i = 0; i < adornment.length(); i++) {
             char c = adornment.charAt(i);
-            Variable variable = (Variable) tgd.head.terms.get(i);
+            Variable variable = (Variable) tgd.head.getAtoms().get(0).terms.get(i);
             Variable nv = Variable.fetchNewVariable();
             if (c == 'b') {
                 if (variable.isExistential()) {
@@ -105,7 +105,8 @@ public class MagicSetGadget {
             variableMappings.put(variable, nv);
             terms.add(nv);
         }
-        result.head = new PositiveAtom(adornedPredicate, terms);
+        result.head = new Conjunct();
+        result.head.add(new PositiveAtom(adornedPredicate, terms));
         result.body = new Conjunct();
         for (PositiveAtom atom : tgd.body.getAtoms()) {
             terms = new ArrayList<>();
@@ -134,10 +135,11 @@ public class MagicSetGadget {
 
     private static TGD generateLoadingRule(Predicate adorned) {
         TGD tgd = new TGD();
-        tgd.head = new PositiveAtom(adorned, fillVariables(adorned));
+        tgd.head = new Conjunct();
+        tgd.head.add(new PositiveAtom(adorned, fillVariables(adorned)));
         tgd.body = new Conjunct();
         ArrayList<Term> ts = new ArrayList<>();
-        ts.addAll(tgd.head.terms);
+        ts.addAll(tgd.head.getAtoms().get(0).terms);
         tgd.body.add(new PositiveAtom(adorned.fetchSimplePredicate(), ts));
         return tgd;
     }

@@ -6,6 +6,9 @@ public class Node {
     public Position p;
     public Set<Node> nexts = new HashSet<Node>();
     public Set<Node> nextSpecials = new HashSet<Node>();
+    public int index = -1;
+    public boolean onStack;
+    public int lowLink;
 
     public Node(Position position) {
         this.p = position;

@@ -49,7 +49,7 @@ public class SyntacticModifier {
     private static Set<Conjunct> match(TGD tgd, Conjunct conjunct) {
         HashSet<Conjunct> cs = new HashSet<>();
         for (Atom atom : conjunct.getAtoms()) {
-            Assignment assignment  = AtomGadget.mapTo(tgd.head, atom);
+            Assignment assignment  = AtomGadget.mapTo(tgd.head.getAtoms().get(0), atom);
             if (assignment != null) {
                 for (Variable variable : tgd.variables.values()) {
                     if (!assignment.getMappings().containsKey(variable)) assignment.put(variable, Variable.getDontCare());
@@ -66,7 +66,7 @@ public class SyntacticModifier {
             bodyAtoms.add(atom.apply(assignment));
         }
         Conjunct newConjunct = new Conjunct();
-        PositiveAtom head = ((PositiveAtom) tgd.head).apply(assignment);
+        PositiveAtom head = tgd.head.getAtoms().get(0).apply(assignment);
         for (PositiveAtom atom : conjunct.getAtoms()) {
             PositiveAtom toAdd = atom.apply(assignment);
             if (head.equals(toAdd)) {

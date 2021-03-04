@@ -31,7 +31,7 @@ public class RuleGadget {
 
     public static List<Atom> getAtoms(TGD rule) {
         ArrayList<Atom> atoms = new ArrayList<>();
-        atoms.add(rule.head);
+        atoms.addAll(rule.head.getAtoms());
         atoms.addAll(rule.body.getAtoms());
         return atoms;
     }

@@ -16,8 +16,6 @@ public class NC extends Rule<Conjunct, FalseAtom> {
                 existential = true;
         }
         Variable variable = variables.get(s);
-        if (!body)
-            headVariables.add(variable);
         if (body)
             variable.setBody();
         else

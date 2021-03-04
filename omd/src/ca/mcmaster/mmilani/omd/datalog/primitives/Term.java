@@ -6,13 +6,11 @@ public abstract class Term {
         Term term;
         if (s.startsWith("z_")) {
             term = Null.fetch(s);
-        } else if (s.contains("'")) {
+        } else if (s.contains("'") || owner == null || owner.length == 0) {
             term = Constant.fetch(s.replaceAll("'", ""));
         } else if (s.equals(Variable.DONT_CARE)) {
             term = Variable.getDontCare();
         } else {
-            if (owner == null || owner.length == 0)
-                throw new RuntimeException(s);
             term = owner[0].fetchVariable(s, body);
         }
         return term;

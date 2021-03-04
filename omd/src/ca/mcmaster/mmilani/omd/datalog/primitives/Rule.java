@@ -10,7 +10,7 @@ public abstract class Rule<B,H> {
     public B body;
     public H head;
     public Map<String, Variable> variables = new HashMap<>();
-    public Set<Variable> headVariables = new HashSet<>();
+
 
     public abstract void addProgram(Program program);
 
