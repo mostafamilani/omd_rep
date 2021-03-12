@@ -5,7 +5,6 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 import static ca.mcmaster.mmilani.omd.datalog.TerminationAnalyzer.terminates;
 
@@ -21,18 +20,18 @@ public class SyntacticAnalyzer {
     public static boolean isSimpleLinear(Set<TGD> rules) {
         for (TGD rule : rules) {
             if (!isLinear(rule)) {
-                System.out.println("Nonlinear rule: " + rule);
+//                System.out.println("Nonlinear rule: " + rule);
                 return false;
             }
             if (hasRepeatedVariable(rule)) {
-                System.out.println("Rule with self join: " + rule);
+//                System.out.println("Rule with self join: " + rule);
                 return false;
             }
         }
         return true;
     }
 
-    private static boolean hasRepeatedVariable(TGD tgd) {
+    public static boolean hasRepeatedVariable(TGD tgd) {
         for (Variable variable : tgd.variables.values()) {
             if (variable.isBody() && isRepeated(variable, tgd))
                 return true;
@@ -40,7 +39,7 @@ public class SyntacticAnalyzer {
         return false;
     }
 
-    private static boolean isLinear(TGD tgd) {
+    public static boolean isLinear(TGD tgd) {
         return tgd.body.getAtoms().size() == 1;
     }
 
@@ -48,7 +47,7 @@ public class SyntacticAnalyzer {
         for (TGD tgd : tgds) {
             for (Variable variable : tgd.variables.values()) {
                 if (variable.isBody() && isRepeated(variable, tgd) && variable.isMarked()) {
-                    System.out.println("Non-sticky rule: " + tgd + " with a repeated marked variable: " + variable);
+//                    System.out.println("Non-sticky rule: " + tgd + " with a repeated marked variable: " + variable);
                     return false;
                 }
             }
@@ -72,31 +71,30 @@ public class SyntacticAnalyzer {
         return true;
     }
 
-
     public static boolean isGuarded(Set<TGD> tgds) {
         for (TGD tgd : tgds) {
             if (!hasGuard(tgd)) {
-                System.out.println("Rule without a guard atom: " + tgd);
+//                System.out.println("Rule without a guard atom: " + tgd);
                 return false;
             }
         }
         return true;
     }
 
-    private static boolean hasGuard(TGD tgd) {
+    public static boolean hasGuard(TGD tgd) {
         for (PositiveAtom atom : tgd.body.getAtoms()) {
             if (isGuard(atom, tgd.body)) return true;
         }
         return false;
     }
 
-    private static boolean isGuard(PositiveAtom atom, Conjunct body) {
+    public static boolean isGuard(PositiveAtom atom, Conjunct body) {
         Set<Variable> variables = new HashSet<>(body.getVariables());
         variables.removeAll(getVariables(atom));
         return variables.isEmpty();
     }
 
-    private static Set<Variable> getVariables(PositiveAtom atom) {
+    public static Set<Variable> getVariables(PositiveAtom atom) {
         HashSet<Variable> variables = new HashSet<>();
         for (Term term : atom.terms) {
             if (term instanceof Variable)
@@ -105,25 +103,33 @@ public class SyntacticAnalyzer {
         return variables;
     }
 
-    public static Set<Position> getPositionsInSpecialCycle(Map<Position, Node> dGraph) {
+    public static Set<Node> getNodesInSpecialCycle(Map<Position, Node> dGraph, Program program) {
         FCComponent.globalIndex = 0;
         FCComponent.stack = new Stack<Node>();
         Set<FCComponent> components = new HashSet<>();
         for (Node node : dGraph.values()) {
-            if (node.index == -1) stringConnect(node, components);
+            if (node.index == -1) strongConnect(node, components);
         }
-        HashSet<Position> result = new HashSet<>();
+        HashSet<Node> result = new HashSet<>();
         for (FCComponent component : components) {
             if (component.special) {
-                for (Node node : component.members) {
-                    result.add(node.p);
-                }
+                result.addAll(component.members);
+                program.nSpecialComponents++;
             }
         }
+        program.nComponents = components.size();
         return result;
     }
 
-    private static void stringConnect(Node node, Set<FCComponent> components) {
+    public static Set<Position> getPositions(Set<Node> nodes) {
+        HashSet<Position> positions = new HashSet<>();
+        for (Node node : nodes) {
+            positions.add(node.p);
+        }
+        return positions;
+    }
+
+    public static void strongConnect(Node node, Set<FCComponent> components) {
         node.index = FCComponent.globalIndex;
         node.lowLink = FCComponent.globalIndex;
         FCComponent.globalIndex++;
@@ -139,16 +145,17 @@ public class SyntacticAnalyzer {
                 special = true;
 
             if (next.index == -1) {
-                stringConnect(next, components);
+                strongConnect(next, components);
                 node.lowLink = Math.min(node.lowLink, next.lowLink);
-                if (special) FCComponent.stack.push(null);
-            } else if (next.onStack) {
+            } else if (next.onStack){
                 node.lowLink = Math.min(node.lowLink, next.index);
-                if (special) FCComponent.stack.push(null);
             }
+            if (special) FCComponent.stack.push(null);
         }
 
-        if (node.lowLink == node.index) {
+        if (node.lowLink == node.index && (FCComponent.stack.peek() == null || (
+                FCComponent.stack.peek() != node &&
+                FCComponent.stack.peek().lowLink == node.lowLink))) {
             FCComponent component = new FCComponent();
             Node next;
             do {
@@ -158,20 +165,20 @@ public class SyntacticAnalyzer {
                     continue;
                 }
                 next.onStack = false;
-                component.members.add(next);
-            } while(node != next);
+                if (node.lowLink == next.lowLink) {
+                    component.members.add(next);
+                }
+            } while (node != next);
             components.add(component);
         }
     }
 
-    public static Set<Position> getInfiniteRankPositions(Map<Position, Node> dGraph) {
-        HashSet<Position> positions = new HashSet<>();
-        for (Node node : dGraph.values()) {
-            if (isPathBetween(node, node) == 2) {
-                positions.add(node.p);
-            }
-        }
-        return positions;
+    public static Set<Node> getInfiniteRankNodes(Map<Position, Node> dGraph, Set<Node> nodesInSpecialCycle) {
+        return findDescendants(nodesInSpecialCycle);
+    }
+
+    public static Set<Position> getInfiniteRankPositions(Map<Position, Node> dGraph, Set<Node> nodesInSpecialCycle) {
+        return getPositions(getInfiniteRankNodes(dGraph, nodesInSpecialCycle));
     }
 
     public static Map<Position, Node> buildDependencyGraph(Set<TGD> rules) {
@@ -192,92 +199,106 @@ public class SyntacticAnalyzer {
         return graph;
     }
 
-    private static int isPathBetween(Node n1, Node n2) {
+    public static int isPathBetween(Node n1, Node n2) {
         Set<Node> visited = new HashSet<>();
         return isPathBetween(n1, n2, visited);
     }
 
-    private static int isPathBetween(Node n1, Node n2, Set<Node> visited) {
+    public static int isPathBetween(Node n1, Node n2, Set<Node> visited) {
         Set<Node> nexts = new HashSet<>(n1.nexts);
         nexts.addAll(n1.nextSpecials);
         for (Node next : nexts) {
             boolean special = n1.nextSpecials.contains(next);
             if (next.equals(n2)) {
                 visited.add(n2);
-                return special? 2 : 1;
+                return special ? 2 : 1;
             }
-            if (!visited.contains(next)){
+            if (!visited.contains(next)) {
                 visited.add(next);
                 int path = isPathBetween(next, n2, visited);
                 if (path == 2)
                     return 2;
                 else if (path == 1)
-                    return special? 2 : 1;
+                    return special ? 2 : 1;
             }
         }
         return 0;
     }
 
-    public static Set<Position> findAncestors(Map<Position,Node> graph, Position position) {
-        HashSet<Position> positions = new HashSet<>();
-        for (Node next : graph.values()) {
-            if (isPathBetween(next, new Node(position)) > 0) {
-                positions.add(next.p);
-            }
+    public static Set<Node> findAncestors(Set<Node> graph, Set<Node> nodes) {
+        Map<Node, Node> invertedGraph = generateInvertedGraph(graph);
+        Set<Node> invertNodes = new HashSet<>();
+        for (Node node : nodes) {
+            invertNodes.add(invertedGraph.get(node));
         }
-        return positions;
+        Set<Node> invertDescendants = findDescendants(invertNodes);
+        Map<Node, Node> temp = getReverseMap(invertedGraph);
+        HashSet<Node> result = new HashSet<>();
+        for (Node node : invertDescendants) {
+            result.add(temp.get(node));
+        }
+        return result;
     }
 
-    public static Set<Position> findAncestorsEfficiently(Map<Position,Node> graph, Set<Position> positions) {
-        HashSet<Position> result = new HashSet<>(positions);
-        Map<Position,Node> indvertedGraph = generateInvertedGraph(graph);
+    public static Map<Node, Node> getReverseMap(Map<Node, Node> map) {
+        Map<Node, Node> result = new HashMap<>();
+        for (Node node : map.keySet()) {
+            result.put(map.get(node), node);
+        }
+        return result;
+    }
+
+    public static Set<Node> findDescendants(Set<Node> nodes) {
         Set<Node> ancestors = new HashSet<Node>();
         Set<Node> newAncestors = new HashSet<Node>();
-        for (Position position : positions) {
-            newAncestors.add(indvertedGraph.get(position));
+        for (Node node : nodes) {
+            newAncestors.add(node);
         }
-        while(!newAncestors.isEmpty()) {
+        Set<Node> visited = new HashSet<>();
+        while (!newAncestors.isEmpty()) {
             Set<Node> temp = new HashSet<Node>();
             for (Node node : newAncestors) {
+                if (visited.contains(node)) continue;
                 temp.addAll(node.nexts);
                 temp.addAll(node.nextSpecials);
+                visited.add(node);
             }
             temp.removeAll(ancestors);
             ancestors.addAll(temp);
             newAncestors = temp;
         }
-        for (Node node : ancestors) {
-            result.add(node.p);
-        }
-        return result;
+        return ancestors;
     }
 
-    private static Map<Position,Node> generateInvertedGraph(Map<Position,Node> graph) {
-        Map<Position, Node> result = new HashMap<>();
-        for (Position position : graph.keySet()) {
-            Node node = graph.get(position);
-            if (!result.containsKey(node.p)) result.put(node.p, new Node(node.p));
-            Node nodeInver = result.get(node.p);
+    public static Map<Node, Node> generateInvertedGraph(Set<Node> graph) {
+        Map<Node, Node> result = new HashMap<>();
+        for (Node node : graph) {
+            if (!result.containsKey(node)) result.put(node, new Node(node.p));
+            Node nodeInver = result.get(node);
             Set<Node> nexts = new HashSet<>(node.nexts);
             nexts.addAll(node.nextSpecials);
             for (Node next : nexts) {
-                if (!result.containsKey(next.p)) result.put(next.p, new Node(next.p));
-                Node nextInvert = result.get(next.p);
+                if (!result.containsKey(next)) result.put(next, new Node(next.p));
+                Node nextInvert = result.get(next);
                 nextInvert.nexts.add(nodeInver);
             }
         }
         return result;
     }
 
-    public static Set<Position> findAncestors(Map<Position,Node> graph, Set<Position> positions) {
-        HashSet<Position> result = new HashSet<>();
-        for (Position position : positions) {
-            result.addAll(findAncestors(graph, position));
-        }
-        return result;
+    public static Set<Position> findAncestors(Map<Position, Node> graph, Set<Position> positions) {
+        return getPositions(findAncestors(new HashSet<>(graph.values()), getNodes(graph, positions)));
     }
 
-    private static Set<Node> fetchNode(Map<Position, Node> graph, Set<Position> positions) {
+    public static Set<Node> getNodes(Map<Position, Node> graph, Set<Position> positions) {
+        HashSet<Node> nodes = new HashSet<>();
+        for (Position position : positions) {
+            nodes.add(graph.get(position));
+        }
+        return nodes;
+    }
+
+    public static Set<Node> fetchNode(Map<Position, Node> graph, Set<Position> positions) {
         HashSet<Node> nodes = new HashSet<>();
         for (Position position : positions) {
             if (!graph.containsKey(position)) graph.put(position, new Node(position));
@@ -286,7 +307,7 @@ public class SyntacticAnalyzer {
         return nodes;
     }
 
-    private static Set<Position> getPositionsInConjunct(Variable variable, Conjunct conjunct) {
+    public static Set<Position> getPositionsInConjunct(Variable variable, Conjunct conjunct) {
         HashSet<Position> positions = new HashSet<>();
         for (Atom atom : conjunct.getAtoms()) {
             int pos = 0;
@@ -301,7 +322,7 @@ public class SyntacticAnalyzer {
         return positions;
     }
 
-    private static void findMarkedVariables(Set<TGD> rules) {
+    public static void findMarkedVariables(Set<TGD> rules) {
         Set<Position> markedPositions = new HashSet<Position>();
         for (TGD rule : rules) {
             int pos;
@@ -335,14 +356,14 @@ public class SyntacticAnalyzer {
         }
     }
 
-    private static boolean containsAll(Set<Position> ps1, Set<Position> ps2) {
+    public static boolean containsAll(Set<Position> ps1, Set<Position> ps2) {
         for (Position position : ps2) {
             if (!ps1.contains(position)) return false;
         }
         return true;
     }
 
-    private static boolean isRepeated(Variable variable, TGD tgd) {
+    public static boolean isRepeated(Variable variable, TGD tgd) {
         boolean appeared = false;
         for (Atom atom : tgd.body.getAtoms()) {
             for (Term term : atom.terms) {
@@ -357,30 +378,14 @@ public class SyntacticAnalyzer {
         return false;
     }
 
-    public static void main1(String[] args) throws IOException {
-        File in = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\rewrite.txt");
-        Program program = Parser.parseProgram(in);
-//        System.out.println("isLinear(program.rules) = " + SyntacticAnalyzer.isLinear(program.tgds));
-//        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.tgds));
-//        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.tgds));
-//        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.tgds));
-        List<CQ> cqs = Parser.parseQueries(in);
-        CQ cq = cqs.get(0);
-        MagicSetGadget.rewrite(program, cq);
-        program.chase();
-        Set<Assignment> evaluate = program.evaluate(cq);
-        for (Assignment assignment : evaluate) {
-            System.out.println("assignment = " + assignment);
-        }
-    }
-
     public static void main2(String[] args) throws IOException {
 //        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\test_data\\slinear-2.txt");
         File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\paper_dataset\\00726.txt");
         Program program = Parser.parseProgram(in);
         System.out.println("The number of rules (tgds): " + program.tgds.size());
         Map<Position, Node> graph = buildDependencyGraph(program.tgds);
-        Set<Position> infiniteRankPositions = getInfiniteRankPositions(graph);
+        Set<Node> nodesInSpecialCycle = getNodesInSpecialCycle(graph, program);
+        Set<Position> infiniteRankPositions = getInfiniteRankPositions(graph, nodesInSpecialCycle);
         findMarkedVariables(program.tgds);
         System.out.println("Simple linear? " + (isSimpleLinear(program.tgds) ? "Yes" : "No"));
         System.out.println("Linear? " + (isLinear(program.tgds) ? "Yes" : "No"));
@@ -408,18 +413,18 @@ public class SyntacticAnalyzer {
                 startTime = System.nanoTime();
                 Program program = Parser.parseProgram(in);
                 endTime = System.nanoTime();
-                System.out.println("time to parse program: " + ((endTime - startTime)/1000000000F));
+                System.out.println("time to parse program: " + ((endTime - startTime) / 1000000000F));
                 System.out.println("The number of rules (tgds): " + program.tgds.size() + " and facts: " + program.edb.facts.size());
 
                 startTime = System.nanoTime();
                 Map<Position, Node> graph = buildDependencyGraph(program.tgds);
                 endTime = System.nanoTime();
-                System.out.println("Time to build dependency graph: " + ((endTime - startTime)/1000000000F));
+                System.out.println("Time to build dependency graph: " + ((endTime - startTime) / 1000000000F));
 
                 startTime = System.nanoTime();
-                Set<Position> loopPositions = getPositionsInSpecialCycle(graph);
+                Set<Position> loopPositions = getPositions(getNodesInSpecialCycle(graph, program));
                 endTime = System.nanoTime();
-                System.out.println("Time to find infinite rank positions: " + ((endTime - startTime)/1000000000F));
+                System.out.println("Time to find infinite rank positions: " + ((endTime - startTime) / 1000000000F));
 
 //                startTime = System.nanoTime();
 //                findMarkedVariables(program.tgds);
@@ -432,7 +437,7 @@ public class SyntacticAnalyzer {
                 startTime = System.nanoTime();
                 System.out.println("Terminates? " + (terminates(program, graph, loopPositions) ? "Yes" : "No"));
                 endTime = System.nanoTime();
-                System.out.println("Time to decide termination: " + ((endTime - startTime)/1000000000F));
+                System.out.println("Time to decide termination: " + ((endTime - startTime) / 1000000000F));
             } catch (Exception e) {
                 System.out.println("Can not process " + pathname + "\\" + filename);
             }
@@ -440,22 +445,42 @@ public class SyntacticAnalyzer {
     }
 
     public static void main(String[] args) throws IOException {
-//        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\test_data\\new-test.txt");
-        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\processed\\00757.txt");
+        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\test_data\\new-test-2.txt");
+//        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\owl-dl\\00162.txt");
         long startTime = System.nanoTime();
         Program program = Parser.parseProgram(in);
         long endTime = System.nanoTime();
-        System.out.println("time to parse program: " + ((endTime - startTime)/1000000000F));
+        System.out.println("time to parse program: " + ((endTime - startTime) / 1000000000F));
         System.out.println("The number of rules (tgds): " + program.tgds.size() + " and facts: " + program.edb.facts.size());
 
         startTime = System.nanoTime();
         Map<Position, Node> graph = buildDependencyGraph(program.tgds);
         endTime = System.nanoTime();
-        System.out.println("Time to build dependency graph: " + ((endTime - startTime)/1000000000F));
+        System.out.println("Time to build dependency graph: " + ((endTime - startTime) / 1000000000F));
 
         startTime = System.nanoTime();
-        Set<Position> positions = getPositionsInSpecialCycle(graph);
+        Set<Position> positions = getPositions(getNodesInSpecialCycle(graph, program));
         endTime = System.nanoTime();
-        System.out.println("Time to find infinite rank positions: " + ((endTime - startTime)/1000000000F));
+        System.out.println("Time to find infinite rank positions: " + ((endTime - startTime) / 1000000000F));
+    }
+
+    public static int getNumberMarkedVariables(Program program) {
+        int i = 0;
+        for (TGD tgd : program.tgds) {
+            for (Variable variable : tgd.variables.values()) {
+                if (variable.isMarked()) i++;
+            }
+        }
+        return i;
+    }
+
+    public static double averageFanout(Map<Position, Node> graph) {
+        int size = graph.keySet().size();
+        if (size == 0) return 0;
+        int totalFanout = 0;
+        for (Node node : graph.values()) {
+            totalFanout += node.nexts.size() + node.nextSpecials.size();
+        }
+        return totalFanout / size;
     }
 }

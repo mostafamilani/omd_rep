@@ -18,7 +18,7 @@ public class Predicate {
             predicates.put(name, new Predicate(name, arity));
         Predicate predicate = predicates.get(name);
         if (predicate.arity != arity)
-            throw new RuntimeException("Invalid Arity!");
+            throw new RuntimeException("Invalid Arity! " + predicate);
         return predicate;
     }
 
@@ -29,6 +29,10 @@ public class Predicate {
                 max = predicate.arity;
         }
         return max;
+    }
+
+    public static void renew() {
+        predicates = new HashMap<>();
     }
 
     @Override

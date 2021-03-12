@@ -12,6 +12,7 @@ public class TGD extends Rule<Conjunct, Conjunct> {
 
     @Override
     public void addProgram(Program program) {
+        program.nExistential += existentialVars.size();
         program.tgds.add(this);
     }
 

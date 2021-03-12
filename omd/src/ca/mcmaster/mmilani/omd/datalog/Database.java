@@ -17,7 +17,7 @@ public class Database {
         return s.substring(0, s.length()-2);
     }
 
-    Set<Fact> facts = new HashSet<>();
+    public Set<Fact> facts = new HashSet<>();
 
     Set<Assignment> evaluate(Conjunct c) {
         Set<Assignment> answers = new HashSet<>();

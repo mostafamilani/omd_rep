@@ -7,9 +7,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Parser {
     public static Program parseProgram(File file) throws IOException {
+        Predicate.renew();
         Program program = new Program();
         String line;
         BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -17,25 +20,42 @@ public class Parser {
 //            System.out.println("line = " + line);
             if (line.replaceAll(
                     " ", "").equals("") || line.contains("?") || line.contains("%")) continue;
-            if (line.equals("Prefixes: [") || line.equals("Disjunctive DL-clauses: [") || line.equals("Statistics: [")) line = skipToNextLine(reader);
+            if (line.equals("Prefixes: [") || line.equals("Statistics: [")) line = skipToNextLine(reader);
             if (line == null) continue;
             if (line.equals("Deterministic DL-clauses: [") ||
+                    line.equals("Disjunctive DL-clauses: [") ||
                     line.equals("ABox: [") ||
                     line.equals("]")) continue;
-            if (line.contains(":-")) {
-                Rule rule = parseRule(line);
-                rule.addProgram(program);
+            if (line.contains(" v ")) line = line.replaceAll(" v ", ",");
+            if (line.contains("=")) continue;
+            if (line.replaceAll(" ", "").startsWith(":-")) continue;
+            if (line.contains("atLeast")) {
+                line = cleanRule(line);
             }
-            else {
-                if (line.contains("=")) continue;
-//                program.edb.facts.add((Fact) Atom.parse(line.substring(0, line.length() - 1), false));
-                try {
-                    program.edb.facts.add((Fact) Atom.parse(line, false));
-                } catch (Exception e) {
+            try {
+                if (line.contains(":-")) {
+                    Rule rule = parseRule(line);
+                    rule.addProgram(program);
                 }
+                else {
+    //                program.edb.facts.add((Fact) Atom.parse(line.substring(0, line.length() - 1), false));
+
+                        program.edb.facts.add((Fact) Atom.parse(line, false));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return program;
+    }
+
+    private static String cleanRule(String line) {
+        StringTokenizer t = new StringTokenizer(line, " ()\n\t");
+        t.nextToken();t.nextToken();
+        String p = t.nextToken().replaceAll(" ", "");
+        String q = t.nextToken().replaceAll(" ", "");
+        String x = t.nextToken().replaceAll(" ", "");
+        return p + "(" + x + ",ZZ)," + q + "(" + x + ")" + line.substring(line.indexOf(":-"), line.length());
     }
 
     private static String skipToNextLine(BufferedReader reader) throws IOException {
@@ -47,6 +67,7 @@ public class Parser {
     }
 
     private static Rule parseRule(String line) {
+//        System.out.println("line = " + line);
         String head = "";
 //        line = line.replaceAll(" ", "");
         Rule rule;
@@ -112,7 +133,7 @@ public class Parser {
         return query;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main2(String[] args) throws IOException {
         FileWriter writer = new FileWriter("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\run.bat");
 
         for (int i = 1; i <= 797; i++) {
@@ -125,5 +146,10 @@ public class Parser {
             String command = "java -jar C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\lib\\HermiT.jar " + in + " --dump-clauses=" + out + "\n";
             writer.write(command);
         }
+    }
+
+    public static void main(String[] args) {
+        String s = cleanRule("atLeast(1 acgt:reveals acgt:TotalBilirubin)(X) :- acgt:TotalBilirubinTest(X)");
+        System.out.println("s = " + s);
     }
 }

@@ -13,26 +13,27 @@ import static ca.mcmaster.mmilani.omd.datalog.SyntacticAnalyzer.buildDependencyG
 public class TerminationAnalyzer {
     public static boolean terminates(Program program, Map<Position, Node> graph, Set<Position> infiniteRankPositions) {
         if (infiniteRankPositions.isEmpty()) {
-            System.out.println("There is no position with infinite rank!");
+//            System.out.println("There is no position with infinite rank!");
             return true;
-        } else {
+        } /*else {
             String positions = "";
             for (Position position : infiniteRankPositions) { positions += position + ",";
             }
-//            System.out.println("Positions with infinite rank: " + positions.substring(0, positions.length() - 1));
-        }
+            System.out.println("Positions with infinite rank: " + positions.substring(0, positions.length() - 1));
+        }*/
 //        Set<Position> ancestors = SyntacticAnalyzer.findAncestors(dGraph, infiniteRankPositions);
-        Set<Position> ancestors = SyntacticAnalyzer.findAncestorsEfficiently(graph, infiniteRankPositions);
+        Set<Position> ancestors = SyntacticAnalyzer.findAncestors(graph, infiniteRankPositions);
         Set<Predicate> ePredicates = fetchExtensionalPredicates(program);
 
-        String sql = generateSQL(ancestors);
+//        String sql = generateSQL(ancestors);
 //        System.out.println("sql = " + sql);
-        for (Position position : ancestors) {
-            if (ePredicates.contains(position.predicate)) {
-                System.out.println(position.predicate + " supports an infinite loop.");
-                return false;
+        if (!ePredicates.isEmpty())
+            for (Position position : ancestors) {
+                if (ePredicates.contains(position.predicate)) {
+//                System.out.println(position.predicate + " supports an infinite loop.");
+                    return false;
+                }
             }
-        }
         return true;
     }
 
@@ -45,7 +46,7 @@ public class TerminationAnalyzer {
         for (Predicate predicate : predicates) {
             tableCheck += "EXISTS(SELECT 1 FROM " + predicate + ") OR ";
         }
-        if (!tableCheck.equals("")) tableCheck = tableCheck.substring(0,tableCheck.length()-4);
+        if (!tableCheck.equals("")) tableCheck = tableCheck.substring(0, tableCheck.length() - 4);
         return "SELECT CASE WHEN " + tableCheck + " THEN TRUE ELSE FALSE END";
     }
 

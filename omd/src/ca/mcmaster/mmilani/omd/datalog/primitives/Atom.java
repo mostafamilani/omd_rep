@@ -15,7 +15,7 @@ public abstract class Atom {
     }
 
     public static Atom parse(String s, boolean body, Rule... rule) {
-        StringTokenizer t = new StringTokenizer(s, "(,=)");
+        StringTokenizer t = new StringTokenizer(s.replace(" ", ""), "(,=)");
         Atom atom = null;
         if (s.contains("=")) {
             atom = new EqualityAtom(Term.parse(t.nextToken(), body, rule), Term.parse(t.nextToken(), body, rule));

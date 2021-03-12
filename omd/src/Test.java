@@ -10,7 +10,11 @@ import java.util.*;
 
 public class Test {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
+
+    }
+
+    public static void main2(String[] args) throws IOException {
         File file = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\test_data\\test.txt");
 //        File file = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\paper_dataset\\00001.txt");
         Program p = Parser.parseProgram(file);

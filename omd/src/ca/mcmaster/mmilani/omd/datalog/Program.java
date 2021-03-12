@@ -11,7 +11,10 @@ public class Program {
     public Set<TGD> tgds = new HashSet<>();
     public Set<EGD> egds = new HashSet<>();
     public Set<NC> ncs = new HashSet<>();
-    Database edb = new Database();
+    public Database edb = new Database();
+    public int nExistential = 0;
+    public int nComponents = 0;
+    public int nSpecialComponents = 0;
     private Set<ApplicablePair> applicables = new HashSet<>();
     private Set<ApplicablePair> applieds = new HashSet<>();
     private Set<ApplicablePair> blockeds = new HashSet<>();
