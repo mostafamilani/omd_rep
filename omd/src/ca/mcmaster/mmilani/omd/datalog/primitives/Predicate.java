@@ -1,38 +1,18 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
+import ca.mcmaster.mmilani.omd.datalog.engine.Program;
+
 import java.util.*;
 
 public class Predicate {
     public String name;
     public int arity;
+    public Program program;
 
-    public static Map<String, Predicate> predicates = new HashMap<>();
-
-    private Predicate(String name, int arity) {
+    public Predicate(String name, int arity, Program program) {
         this.name = name;
         this.arity = arity;
-    }
-
-    static Predicate fetch(String name, int arity) {
-        if (!predicates.containsKey(name))
-            predicates.put(name, new Predicate(name, arity));
-        Predicate predicate = predicates.get(name);
-        if (predicate.arity != arity)
-            throw new RuntimeException("Invalid Arity! " + predicate);
-        return predicate;
-    }
-
-    public static int maxArity() {
-        int max = Integer.MIN_VALUE;
-        for (Predicate predicate : predicates.values()) {
-            if (predicate.arity > max)
-                max = predicate.arity;
-        }
-        return max;
-    }
-
-    public static void renew() {
-        predicates = new HashMap<>();
+        this.program = program;
     }
 
     @Override
@@ -40,33 +20,11 @@ public class Predicate {
         return name;
     }
 
-    public Predicate fetchAdornedPredicate(String adornment) {
-        if (isAdorned())
-            return null;
-        return fetch(name + "^" + adornment, arity);
-    }
-
-    private boolean isAdorned() {
+    public boolean isAdorned() {
         return name.contains("^");
     }
 
     public boolean isMagic() { return name.startsWith("m_"); }
-
-    public Predicate fetchSimplePredicate() {
-        if (!isAdorned())
-            return null;
-        return fetch(name.substring(0, name.indexOf("^")), arity);
-    }
-
-    public Set<Predicate> allAdorned() {
-        HashSet<Predicate> result = new HashSet<>();
-        for (Predicate predicate : predicates.values()) {
-            if (predicate.name.contains(name + "^")) {
-                result.add(predicate);
-            }
-        }
-        return result;
-    }
 
     public String getAdornment() {
         if (!isAdorned())
@@ -74,12 +32,16 @@ public class Predicate {
         return name.substring(name.indexOf("^") + 1, name.length());
     }
 
-    public Predicate fetchMagicPredicate() {
-        if (!isAdorned())
-            return null;
-        Predicate p = fetchSimplePredicate();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Predicate predicate = (Predicate) o;
+        return arity == predicate.arity && Objects.equals(name, predicate.name);
+    }
 
-        String adornment = getAdornment();
-        return fetch("m_" + p.name + "^" + adornment, adornment.replaceAll("b", "").length());
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, arity);
     }
 }

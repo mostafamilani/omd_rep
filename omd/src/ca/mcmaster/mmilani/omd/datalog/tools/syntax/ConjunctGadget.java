@@ -1,7 +1,7 @@
 package ca.mcmaster.mmilani.omd.datalog.tools.syntax;
 
-import ca.mcmaster.mmilani.omd.datalog.Assignment;
-import ca.mcmaster.mmilani.omd.datalog.Parser;
+import ca.mcmaster.mmilani.omd.datalog.primitives.Assignment;
+import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
 import java.util.*;
@@ -101,8 +101,8 @@ public class ConjunctGadget {
 //            String s2 = reader.next();
             CQ q1 = new CQ();
             CQ q2 = new CQ();
-            Conjunct c1 = Parser.parseConjunct(s1, true, q1);
-            Conjunct c2 = Parser.parseConjunct(s2, true, q2);
+            Conjunct c1 = Parser.parseConjunct(s1, true, null, q1);
+            Conjunct c2 = Parser.parseConjunct(s2, true, null, q2);
             boolean b1 = mapTo(c1, c2);
             boolean b2 = mapTo(c2, c1);
             System.out.println(c1 + " -> " + c2 + " : " + b1);

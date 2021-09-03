@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class Variable extends Term {
-    static int index = 0;
     boolean body = false;
     boolean head = false;
     boolean existential;
@@ -14,20 +13,8 @@ public class Variable extends Term {
 
     final static String DONT_CARE = "*";
 
-    public static Map<String, Variable> variables = new HashMap<>();
-
-    private Variable(String name) {
+    public Variable(String name) {
         this.label = name;
-    }
-
-    public static Variable fetchVariable(String name) {
-        if (!variables.containsKey(name)) variables.put(name, new Variable(name));
-        return variables.get(name);
-    }
-
-    public static Variable fetchNewVariable() {
-        index++;
-        return fetchVariable("@" + Integer.toHexString(index));
     }
 
     public boolean isBody() {
@@ -56,10 +43,6 @@ public class Variable extends Term {
 
     public boolean dontCare() {
         return label.equals(DONT_CARE);
-    }
-
-    public static Variable getDontCare() {
-        return fetchVariable(DONT_CARE);
     }
 
     public boolean isHead() {

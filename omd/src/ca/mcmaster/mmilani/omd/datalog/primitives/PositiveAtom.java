@@ -1,9 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import ca.mcmaster.mmilani.omd.datalog.Assignment;
-
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class PositiveAtom extends Atom {

@@ -1,6 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.tools.syntax;
 
-import ca.mcmaster.mmilani.omd.datalog.Assignment;
+import ca.mcmaster.mmilani.omd.datalog.primitives.Assignment;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Atom;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Term;
 

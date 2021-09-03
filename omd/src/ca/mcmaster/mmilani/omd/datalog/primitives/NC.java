@@ -1,6 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import ca.mcmaster.mmilani.omd.datalog.Program;
+import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 
 public class NC extends Rule<Conjunct, FalseAtom> {
     @Override
@@ -11,7 +11,7 @@ public class NC extends Rule<Conjunct, FalseAtom> {
     public Variable fetchVariable(String s, boolean body) {
         boolean existential = false;
         if (!variables.containsKey(s)) {
-            variables.put(s, Variable.fetchNewVariable());
+            variables.put(s, fetchNewVariable());
             if (!body)
                 existential = true;
         }

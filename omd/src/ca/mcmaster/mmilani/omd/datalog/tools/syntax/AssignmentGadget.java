@@ -1,10 +1,9 @@
 package ca.mcmaster.mmilani.omd.datalog.tools.syntax;
 
-import ca.mcmaster.mmilani.omd.datalog.Assignment;
+import ca.mcmaster.mmilani.omd.datalog.primitives.Assignment;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Term;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class AssignmentGadget {

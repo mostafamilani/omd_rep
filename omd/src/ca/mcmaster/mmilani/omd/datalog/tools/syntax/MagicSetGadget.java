@@ -1,7 +1,8 @@
-package ca.mcmaster.mmilani.omd.datalog;
+package ca.mcmaster.mmilani.omd.datalog.tools.syntax;
 
+import ca.mcmaster.mmilani.omd.datalog.engine.Program;
+import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
-import ca.mcmaster.mmilani.omd.datalog.tools.syntax.RuleGadget;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,12 +12,12 @@ public class MagicSetGadget {
     public static void rewrite(Program program, CQ cq) {
         Set<TGD> adornedRules = new HashSet<>();
         Set<Predicate> adornedPredicates = new HashSet<>();
-        Set<Predicate> newPredicates = adornedQueryPredicates(cq);
+        Set<Predicate> newPredicates = adornedQueryPredicates(cq, program);
         while (!newPredicates.isEmpty()) {
             Predicate adornedPredicate = newPredicates.iterator().next();
             adornedPredicates.add(adornedPredicate);
             for (TGD tgd : program.tgds) {
-                TGD adornedRule = generateAdornedTGD(tgd, adornedPredicate);
+                TGD adornedRule = generateAdornedTGD(tgd, adornedPredicate, program);
                 if (adornedRule != null && !RuleGadget.contains(adornedRules, adornedRule)) {
                     adornedRules.add(adornedRule);
                     for (Predicate newAdornedPredicate : getBodyAdornedPredicates(adornedRule)) {
@@ -27,10 +28,10 @@ public class MagicSetGadget {
             }
             newPredicates.remove(adornedPredicate);
         }
-        Set<Predicate> magicPredicates = addMagicPredicates(adornedRules);
+        Set<Predicate> magicPredicates = addMagicPredicates(adornedRules, program);
         Set<TGD> magicRules = generateMagicRules(adornedRules, magicPredicates);
         program.tgds.addAll(adornedRules);
-        program.tgds.addAll(generateLoadingRules(adornedPredicates));
+        program.tgds.addAll(generateLoadingRules(adornedPredicates, program));
     }
 
     private static Set<TGD> generateMagicRules(Set<TGD> adornedRules, Set<Predicate> magicPredicates) {
@@ -51,10 +52,10 @@ public class MagicSetGadget {
         return null;
     }
 
-    private static Set<Predicate> addMagicPredicates(Set<TGD> adornedRules) {
+    private static Set<Predicate> addMagicPredicates(Set<TGD> adornedRules, Program program) {
         HashSet<Predicate> magicPredicates = new HashSet<>();
         for (TGD adornedRule : adornedRules) {
-            Predicate magicPredicate = adornedRule.head.getAtoms().get(0).predicate.fetchMagicPredicate();
+            Predicate magicPredicate = program.schema.fetchMagicPredicate(adornedRule.head.getAtoms().get(0).predicate);
             List<Term> variables = getFreeVariables(adornedRule.head.getAtoms().get(0));
             PositiveAtom magicAtom = new PositiveAtom(magicPredicate, variables);
             adornedRule.body.addFirst(magicAtom);
@@ -75,16 +76,16 @@ public class MagicSetGadget {
         return terms;
     }
 
-    private static Set<TGD> generateLoadingRules(Set<Predicate> adornedPredicates) {
+    private static Set<TGD> generateLoadingRules(Set<Predicate> adornedPredicates, Program program) {
         Set<TGD> loadingRules = new HashSet<>();
         for (Predicate adorned : adornedPredicates) {
-            loadingRules.add(generateLoadingRule(adorned));
+            loadingRules.add(generateLoadingRule(adorned, program));
         }
         return loadingRules;
     }
 
-    private static TGD generateAdornedTGD(TGD tgd, Predicate adornedPredicate) {
-        if (tgd.head.getAtoms().get(0).predicate != adornedPredicate.fetchSimplePredicate())
+    private static TGD generateAdornedTGD(TGD tgd, Predicate adornedPredicate, Program program) {
+        if (tgd.head.getAtoms().get(0).predicate != program.schema.fetchSimplePredicate(adornedPredicate))
             return null;
         TGD result = new TGD();
         Set<Variable> boundedVariables = new HashSet<>();
@@ -95,7 +96,7 @@ public class MagicSetGadget {
         for (int i = 0; i < adornment.length(); i++) {
             char c = adornment.charAt(i);
             Variable variable = (Variable) tgd.head.getAtoms().get(0).terms.get(i);
-            Variable nv = Variable.fetchNewVariable();
+            Variable nv = tgd.fetchNewVariable();
             if (c == 'b') {
                 if (variable.isExistential()) {
                     return null;
@@ -115,7 +116,7 @@ public class MagicSetGadget {
                 Variable v = (Variable) term;
                 Variable nv;
                 if (!variableMappings.containsKey(v)) {
-                    nv = Variable.fetchNewVariable();
+                    nv = result.fetchNewVariable();
                     variableMappings.put(v, nv);
                 }
                 nv = variableMappings.get(v);
@@ -128,19 +129,19 @@ public class MagicSetGadget {
                 visited.add(nv);
                 terms.add(nv);
             }
-            result.body.add(new PositiveAtom(atom.predicate.fetchAdornedPredicate(adornment.toString()), terms));
+            result.body.add(new PositiveAtom(program.schema.fetchAdornedPredicate(atom.predicate, adornment.toString()), terms));
         }
         return result;
     }
 
-    private static TGD generateLoadingRule(Predicate adorned) {
+    private static TGD generateLoadingRule(Predicate adorned, Program program) {
         TGD tgd = new TGD();
         tgd.head = new Conjunct();
-        tgd.head.add(new PositiveAtom(adorned, fillVariables(adorned)));
+        tgd.head.add(new PositiveAtom(adorned, fillVariables(tgd, adorned)));
         tgd.body = new Conjunct();
         ArrayList<Term> ts = new ArrayList<>();
         ts.addAll(tgd.head.getAtoms().get(0).terms);
-        tgd.body.add(new PositiveAtom(adorned.fetchSimplePredicate(), ts));
+        tgd.body.add(new PositiveAtom(program.schema.fetchSimplePredicate(adorned), ts));
         return tgd;
     }
 
@@ -152,23 +153,23 @@ public class MagicSetGadget {
         return result;
     }
 
-    private static List<Term> fillVariables(Predicate predicate) {
+    private static List<Term> fillVariables(TGD tgd, Predicate predicate) {
         ArrayList<Term> terms = new ArrayList<>();
         for (int i = 0; i < predicate.arity; i++) {
-            terms.add(Variable.fetchNewVariable());
+            terms.add(tgd.fetchNewVariable());
         }
         return terms;
     }
 
-    private static Set<Predicate> adornedQueryPredicates(CQ cq) {
+    private static Set<Predicate> adornedQueryPredicates(CQ cq, Program program) {
         HashSet<Predicate> predicates = new HashSet<>();
         for (PositiveAtom atom : cq.body.getAtoms()) {
-            predicates.add(adornedPredicate(atom));
+            predicates.add(adornedPredicate(atom, program));
         }
         return predicates;
     }
 
-    private static Predicate adornedPredicate(PositiveAtom atom) {
+    private static Predicate adornedPredicate(PositiveAtom atom, Program program) {
         StringBuilder adornment = new StringBuilder();
         for (Term term : atom.terms) {
             if (term instanceof Variable) {
@@ -177,7 +178,7 @@ public class MagicSetGadget {
                 adornment.append("b");
             }
         }
-        return atom.predicate.fetchAdornedPredicate(adornment.toString());
+        return program.schema.fetchAdornedPredicate(atom.predicate, adornment.toString());
     }
 
     public static void main(String[] args) throws IOException {
@@ -187,7 +188,7 @@ public class MagicSetGadget {
 //        System.out.println("isSticky(program.rules) = " + SyntacticAnalyzer.isSticky(program.tgds));
 //        System.out.println("isWeaklyAcyclic(program.rules) = " + SyntacticAnalyzer.isWeaklyAcyclic(program.tgds));
 //        System.out.println("isWeaklySticky(program.rules) = " + SyntacticAnalyzer.isWeaklySticky(program.tgds));
-        List<CQ> cqs = Parser.parseQueries(in);
+        List<CQ> cqs = Parser.parseQueries(in, program);
         CQ cq = cqs.get(0);
         System.out.println("program before rewriting = " + program);
         MagicSetGadget.rewrite(program, cq);

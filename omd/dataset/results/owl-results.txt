@@ -1,4 +1,4 @@
-"C:\Program Files\Java\jdk-15.0.2\bin\java.exe" "-javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2020.3.2\lib\idea_rt.jar=50882:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2020.3.2\bin" -Dfile.encoding=UTF-8 -classpath C:\Users\mmilani7\IdeaProjects\omd_rep\out\production\main ca.mcmaster.mmilani.omd.datalog.SyntacticAnalyzer
+"C:\Program Files\Java\jdk-15.0.2\bin\java.exe" "-javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2020.3.2\lib\idea_rt.jar=50882:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2020.3.2\bin" -Dfile.encoding=UTF-8 -classpath C:\Users\mmilani7\IdeaProjects\omd_rep\out\production\main ca.mcmaster.mmilani.omd.datalog.executer.SyntacticAnalyzer
 #####################################################
 file: 00001.txt
 time to parse program: 0.085094705

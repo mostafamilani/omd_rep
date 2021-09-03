@@ -1,0 +1,6 @@
+s(x,y,z) :- p(x,y).
+p(x,z) :- s(x,y,z).
+u(x):- p(x,y).
+r(x,y):-u(x).
+s(x,y,z):-r(x,y).
+

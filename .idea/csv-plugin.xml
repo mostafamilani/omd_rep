@@ -3,6 +3,13 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="\omd\dataset\results\chase.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\omd\dataset\results\stats-1.csv">
           <value>
             <Attribute>
@@ -24,38 +31,73 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\omd\dataset\results\stats.csv">
+        <entry key="\omd\dataset\results\stats-5.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\omd\src\ca\mcmaster\mmilani\omd\datalog\Parser.java">
+        <entry key="\omd\dataset\results\stats-6.csv">
           <value>
             <Attribute>
-              <option name="separator" value=";" />
+              <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\omd\src\ca\mcmaster\mmilani\omd\datalog\SyntacticAnalyzer.java">
+        <entry key="\omd\dataset\results\stats-7.csv">
           <value>
             <Attribute>
-              <option name="separator" value=";" />
+              <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\omd\src\ca\mcmaster\mmilani\omd\datalog\primitives\Predicate.java">
+        <entry key="\omd\dataset\results\stats-8.csv">
           <value>
             <Attribute>
-              <option name="separator" value=";" />
+              <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\omd\src\ca\mcmaster\mmilani\omd\datalog\test\StatGenerator.java">
+        <entry key="\omd\dataset\results\stats-a.csv">
           <value>
             <Attribute>
-              <option name="separator" value=";" />
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\omd\dataset\results\stats-d-1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\omd\dataset\results\stats-diagrams.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\omd\dataset\results\stats-latest.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\omd\dataset\results\stats-new.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\omd\dataset\results\stats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>

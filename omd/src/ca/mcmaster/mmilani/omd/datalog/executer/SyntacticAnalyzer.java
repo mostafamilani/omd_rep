@@ -1,12 +1,15 @@
-package ca.mcmaster.mmilani.omd.datalog;
+package ca.mcmaster.mmilani.omd.datalog.executer;
 
+import ca.mcmaster.mmilani.omd.datalog.engine.Program;
+import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
+import ca.mcmaster.mmilani.omd.datalog.tools.syntax.SearchSetting;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static ca.mcmaster.mmilani.omd.datalog.TerminationAnalyzer.terminates;
+import static ca.mcmaster.mmilani.omd.datalog.executer.TerminationAnalyzer.terminates;
 
 public class SyntacticAnalyzer {
     public static boolean isLinear(Set<TGD> rules) {
@@ -104,20 +107,20 @@ public class SyntacticAnalyzer {
     }
 
     public static Set<Node> getNodesInSpecialCycle(Map<Position, Node> dGraph, Program program) {
-        FCComponent.globalIndex = 0;
-        FCComponent.stack = new Stack<Node>();
-        Set<FCComponent> components = new HashSet<>();
+        SearchSetting setting = new SearchSetting();
         for (Node node : dGraph.values()) {
-            if (node.index == -1) strongConnect(node, components);
+            if (node.index == -1) strongConnect(node, setting);
         }
         HashSet<Node> result = new HashSet<>();
-        for (FCComponent component : components) {
+        for (FCComponent component : setting.components) {
             if (component.special) {
                 result.addAll(component.members);
                 program.nSpecialComponents++;
             }
         }
-        program.nComponents = components.size();
+        program.nComponents = setting.components.size();
+        System.out.println("#components: " + program.nComponents);
+        System.out.println("#special components: " + program.nSpecialComponents);
         return result;
     }
 
@@ -129,47 +132,42 @@ public class SyntacticAnalyzer {
         return positions;
     }
 
-    public static void strongConnect(Node node, Set<FCComponent> components) {
-        node.index = FCComponent.globalIndex;
-        node.lowLink = FCComponent.globalIndex;
-        FCComponent.globalIndex++;
-        FCComponent.stack.push(node);
+    public static void strongConnect(Node node, SearchSetting setting) {
+        node.index = setting.globalIndex;
+        node.lowLink = setting.globalIndex;
+        setting.globalIndex++;
+        setting.stack.push(node);
         node.onStack = true;
 
         Set<Node> nexts = new HashSet<>(node.nexts);
         nexts.addAll(node.nextSpecials);
 
         for (Node next : nexts) {
-            boolean special = false;
-            if (node.nextSpecials.contains(next))
-                special = true;
-
+            if ((next.index == -1 || next.onStack) && node.nextSpecials.contains(next))
+                setting.stack.push(null);
             if (next.index == -1) {
-                strongConnect(next, components);
+                strongConnect(next, setting);
                 node.lowLink = Math.min(node.lowLink, next.lowLink);
             } else if (next.onStack){
                 node.lowLink = Math.min(node.lowLink, next.index);
             }
-            if (special) FCComponent.stack.push(null);
         }
 
-        if (node.lowLink == node.index && (FCComponent.stack.peek() == null || (
-                FCComponent.stack.peek() != node &&
-                FCComponent.stack.peek().lowLink == node.lowLink))) {
+        if (node.lowLink == node.index) {
             FCComponent component = new FCComponent();
             Node next;
             do {
-                next = FCComponent.stack.pop();
+                next = setting.stack.pop();
                 if (next == null) {
                     component.special = true;
                     continue;
                 }
                 next.onStack = false;
-                if (node.lowLink == next.lowLink) {
-                    component.members.add(next);
-                }
+                component.members.add(next);
             } while (node != next);
-            components.add(component);
+            if (!setting.stack.isEmpty())
+                while(setting.stack.peek() == null) setting.stack.pop();
+            setting.components.add(component);
         }
     }
 
@@ -185,7 +183,7 @@ public class SyntacticAnalyzer {
         HashMap<Position, Node> graph = new HashMap<>();
         for (TGD rule : rules) {
             for (Variable variable : rule.variables.values()) {
-                if (!variable.isBody()) continue;
+                if (!variable.isBody() || !rule.isFrontier(variable)) continue;
                 Set<Node> bodyNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.body));
                 Set<Node> headNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.head));
                 for (Node b : bodyNodes) {
@@ -251,20 +249,19 @@ public class SyntacticAnalyzer {
     public static Set<Node> findDescendants(Set<Node> nodes) {
         Set<Node> ancestors = new HashSet<Node>();
         Set<Node> newAncestors = new HashSet<Node>();
-        for (Node node : nodes) {
-            newAncestors.add(node);
-        }
+
+        newAncestors.addAll(nodes);
         Set<Node> visited = new HashSet<>();
         while (!newAncestors.isEmpty()) {
             Set<Node> temp = new HashSet<Node>();
             for (Node node : newAncestors) {
                 if (visited.contains(node)) continue;
+                ancestors.add(node);
                 temp.addAll(node.nexts);
                 temp.addAll(node.nextSpecials);
                 visited.add(node);
             }
             temp.removeAll(ancestors);
-            ancestors.addAll(temp);
             newAncestors = temp;
         }
         return ancestors;
@@ -414,7 +411,7 @@ public class SyntacticAnalyzer {
                 Program program = Parser.parseProgram(in);
                 endTime = System.nanoTime();
                 System.out.println("time to parse program: " + ((endTime - startTime) / 1000000000F));
-                System.out.println("The number of rules (tgds): " + program.tgds.size() + " and facts: " + program.edb.facts.size());
+                System.out.println("The number of rules (tgds): " + program.tgds.size() + " and facts: " + program.edb.getFacts().length);
 
                 startTime = System.nanoTime();
                 Map<Position, Node> graph = buildDependencyGraph(program.tgds);
@@ -445,13 +442,13 @@ public class SyntacticAnalyzer {
     }
 
     public static void main(String[] args) throws IOException {
-        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\test_data\\new-test-2.txt");
-//        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\owl-dl\\00162.txt");
+        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\synthetic\\program-1.txt");
+//        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\owl-dl\\00754.txt");
         long startTime = System.nanoTime();
         Program program = Parser.parseProgram(in);
         long endTime = System.nanoTime();
         System.out.println("time to parse program: " + ((endTime - startTime) / 1000000000F));
-        System.out.println("The number of rules (tgds): " + program.tgds.size() + " and facts: " + program.edb.facts.size());
+        System.out.println("The number of rules (tgds): " + program.tgds.size() + " and facts: " + program.edb.getFacts().length);
 
         startTime = System.nanoTime();
         Map<Position, Node> graph = buildDependencyGraph(program.tgds);
@@ -459,7 +456,13 @@ public class SyntacticAnalyzer {
         System.out.println("Time to build dependency graph: " + ((endTime - startTime) / 1000000000F));
 
         startTime = System.nanoTime();
-        Set<Position> positions = getPositions(getNodesInSpecialCycle(graph, program));
+        Set<Node> nodesInSpecialCycle = getNodesInSpecialCycle(graph, program);
+        Set<Position> positions = getPositions(nodesInSpecialCycle);
+        endTime = System.nanoTime();
+        System.out.println("Time to find infinite rank positions: " + ((endTime - startTime) / 1000000000F));
+
+        startTime = System.nanoTime();
+        Set<Position> infiniteRankPositions = getInfiniteRankPositions(graph, nodesInSpecialCycle);
         endTime = System.nanoTime();
         System.out.println("Time to find infinite rank positions: " + ((endTime - startTime) / 1000000000F));
     }

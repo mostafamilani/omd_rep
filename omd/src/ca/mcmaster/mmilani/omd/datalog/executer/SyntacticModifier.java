@@ -1,5 +1,7 @@
-package ca.mcmaster.mmilani.omd.datalog;
+package ca.mcmaster.mmilani.omd.datalog.executer;
 
+import ca.mcmaster.mmilani.omd.datalog.engine.Program;
+import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 import ca.mcmaster.mmilani.omd.datalog.tools.syntax.AtomGadget;
 import ca.mcmaster.mmilani.omd.datalog.tools.syntax.ConjunctGadget;
@@ -52,7 +54,7 @@ public class SyntacticModifier {
             Assignment assignment  = AtomGadget.mapTo(tgd.head.getAtoms().get(0), atom);
             if (assignment != null) {
                 for (Variable variable : tgd.variables.values()) {
-                    if (!assignment.getMappings().containsKey(variable)) assignment.put(variable, Variable.getDontCare());
+                    if (!assignment.getMappings().containsKey(variable)) assignment.put(variable, tgd.getDontCare());
                 }
                 cs.add(generateConjunct(conjunct, tgd, assignment));
             }
@@ -81,7 +83,7 @@ public class SyntacticModifier {
     public static void main(String[] args) throws IOException {
         File file = new File("C:\\Users\\Mostafa\\Desktop\\omd_prj\\omd_rep\\omd\\rewrite.txt");
         Program p = Parser.parseProgram(file);
-        List<CQ> queries = Parser.parseQueries(file);
+        List<CQ> queries = Parser.parseQueries(file, p);
 
         for (Query query : queries) {
             System.out.println("query = " + query);

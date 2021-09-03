@@ -1,14 +1,10 @@
-package ca.mcmaster.mmilani.omd.datalog;
-
-import ca.mcmaster.mmilani.omd.datalog.primitives.Constant;
-import ca.mcmaster.mmilani.omd.datalog.primitives.Term;
-import ca.mcmaster.mmilani.omd.datalog.primitives.Variable;
+package ca.mcmaster.mmilani.omd.datalog.primitives;
 
 import java.util.*;
 
 public class Assignment {
     public Map<Term, Term> mappings = new HashMap<>();
-    int level = 0;
+    public int level = 0;
 
     public boolean tryToMap(Term t1, Term t2) {
         if (t1 instanceof Variable && ((Variable) t1).dontCare()) return true;

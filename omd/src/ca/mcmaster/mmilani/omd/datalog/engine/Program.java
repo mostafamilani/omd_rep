@@ -1,35 +1,43 @@
-package ca.mcmaster.mmilani.omd.datalog;
+package ca.mcmaster.mmilani.omd.datalog.engine;
 
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 
-import java.awt.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
 public class Program {
+    public String name;
     public Set<TGD> tgds = new HashSet<>();
     public Set<EGD> egds = new HashSet<>();
     public Set<NC> ncs = new HashSet<>();
-    public Database edb = new Database();
+    public Database edb;
     public int nExistential = 0;
     public int nComponents = 0;
     public int nSpecialComponents = 0;
+    public Schema schema;
     private Set<ApplicablePair> applicables = new HashSet<>();
     private Set<ApplicablePair> applieds = new HashSet<>();
     private Set<ApplicablePair> blockeds = new HashSet<>();
 
-    private Database idb = new Database();
+    public Map<String,String> externalParams = new HashMap<>();
+
+    public int size = 0;
+
+    private InMemoryDatabase idb = new InMemoryDatabase();
 
     public Set<Assignment> evaluate(Query q) {
         return idb.evaluate(q);
     }
 
     public void chase() {
-        idb = edb.copy();
+        idb = (InMemoryDatabase) edb.copy();
         System.out.println("edb:");
         System.out.println(idb);
-        for (int i = 0; i <= Predicate.maxArity(); i++) {
+        for (int i = 0; i <= schema.maxArity(); i++) {
             boolean newAtom = true;
             while (newAtom) {
                 newAtom = applyNextPair();
@@ -56,7 +64,7 @@ public class Program {
         Fact at = generate((Atom) pair.rule.head, pair.assignment);
         applicables.remove(pair);
         if (checkAddition(at)) {
-            idb.facts.add(at);
+            idb.addFact(at);
             applieds.add(pair);
             confirmNullInvention(at);
             System.out.println(at);
@@ -121,7 +129,7 @@ public class Program {
     }
 
     private boolean checkAddition(Fact a) {
-        for (Fact fact : idb.facts) {
+        for (Fact fact : idb.facts.values()) {
             if (homomorphic(a, fact))
                 return false;
         }
@@ -195,7 +203,7 @@ public class Program {
                 }
             });
         }
-        Fact.checkNullChange(n, t);
+//        edb.checkNullChange(n, t);
     }
 
     private Fact generate(Atom atom, Assignment answer) {
@@ -214,7 +222,7 @@ public class Program {
                 }
             }
         }
-        Fact fact = Fact.addFact(atom.predicate, terms, answer.level + 1);
+        Fact fact = null;/* = edb.addFact(atom.predicate, terms, answer.level + 1);*/
         for (Null n : nulls) {
             n.atoms.add(fact);
         }
@@ -228,5 +236,53 @@ public class Program {
             s.append(tgd).append("\n");
         }
         return s.toString();
+    }
+
+    public boolean isEmpty() {
+        return false;
+    }
+
+    public void addFact(Fact fact) {
+        if (edb == null)
+            edb = new InMemoryDatabase();
+        size++;
+        edb.addFact(fact);
+    }
+
+    public Fact addFact(Predicate predicate, List<Term> terms, int level) {
+        if (edb == null)
+            edb = new InMemoryDatabase();
+        return edb.addFact(predicate, terms, level);
+    }
+
+    public void loadRecordCounts(String dbname, String configFile) throws IOException, SQLException {
+        Properties prop = new Properties();
+        prop.load(new FileInputStream(configFile));
+        /* create connection */
+        String user = prop.get("user").toString();
+        String pass = prop.get("password").toString();
+        String url = "jdbc:postgresql://localhost/" + dbname + "?user=" + user + "&password=" + pass;
+        Connection conn = DriverManager.getConnection(url, user, pass);
+        for (Predicate predicate : schema.predicates.values()) {
+            Statement statement = conn.createStatement();
+            statement.execute("select count(*) as cnt from " + predicate.name);
+            ResultSet resultSet = statement.getResultSet();
+            int count = 0;
+            while (resultSet.next()) {
+                count = Integer.parseInt(resultSet.getString("cnt"));
+            }
+            edb.recordCount.put(predicate.name, count);
+        }
+    }
+
+    public void addDummies() {
+        Constant c = new Constant("c");
+        for (Predicate predicate : schema.predicates.values()) {
+            ArrayList<Term> ts = new ArrayList<>();
+            for (int i = 0; i < predicate.arity; i++) {
+                ts.add(c);
+            }
+            addFact(new Fact(predicate, ts));
+        }
     }
 }

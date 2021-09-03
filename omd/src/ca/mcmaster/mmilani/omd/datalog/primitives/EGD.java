@@ -1,6 +1,6 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import ca.mcmaster.mmilani.omd.datalog.Program;
+import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -17,7 +17,7 @@ public class EGD extends Rule<Conjunct, EqualityAtom> {
     public Variable fetchVariable(String s, boolean body) {
         boolean existential = false;
         if (!variables.containsKey(s)) {
-            variables.put(s, Variable.fetchNewVariable());
+            variables.put(s, fetchNewVariable());
             if (!body)
                 existential = true;
         }

@@ -1,0 +1,7 @@
+s(x,z) :- p(x,y).
+p(x,z) :- s(x,y).
+u(x):- p(x,y).
+r(x,y):-u(x).
+t(y,z):-r(x,y).
+u(y):-t(x,y).
+u('a').

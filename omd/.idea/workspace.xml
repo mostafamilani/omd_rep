@@ -1,28 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="316a71cf-00ac-42d2-bbfa-d452a9d45d70" name="Default" comment="" />
-    <ignored path="$PROJECT_DIR$/out/" />
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
-    <option name="TRACKING_ENABLED" value="true" />
+    <list default="true" id="316a71cf-00ac-42d2-bbfa-d452a9d45d70" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/../.idea/libraries/lib.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../datafiller/command.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dataset/test_data/component-test-2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dataset/test_data/syntax-test.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/engine/Database.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/engine/PersistantDatabase.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/engine/Schema.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/DLGPGenerator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/OntologyAnalyzer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/ScenarioGenerator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/StatGeneratorSimple.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Range.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/synthesizer/DataGenerator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/synthesizer/ProgramGenerator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/SearchSetting.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/db-config.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/rules.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/csv-plugin.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/csv-plugin.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/libraries/profilechecker.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../main.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../main.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/results/owl-results.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/results/owl-results.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Test.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/Assignment.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Assignment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/Database.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/engine/InMemoryDatabase.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/Engine.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/engine/Engine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/MagicSetGadget.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/MagicSetGadget.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/Parser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/parsing/Parser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/Program.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/engine/Program.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/SyntacticAnalyzer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/SyntacticAnalyzer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/SyntacticModifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/SyntacticModifier.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/TerminationAnalyzer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/TerminationAnalyzer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/ApplicablePair.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/ApplicablePair.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Atom.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Atom.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/CQ.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/CQ.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Constant.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Constant.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/EGD.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/EGD.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/FCComponent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/FCComponent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Fact.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Fact.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/NC.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/NC.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/PositiveAtom.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/PositiveAtom.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Predicate.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Predicate.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Query.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Query.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Rule.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Rule.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/TGD.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/TGD.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Term.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Term.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/UCQ.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/UCQ.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Variable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/primitives/Variable.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/test/GraphTester.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/test/SyntaxTester.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/test/StatGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/executer/StatGenerator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/AssignmentGadget.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/AssignmentGadget.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/AtomGadget.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/AtomGadget.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/ConjunctGadget.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ca/mcmaster/mmilani/omd/datalog/tools/syntax/ConjunctGadget.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="Test.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/Test.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="580">
-              <caret line="27" column="0" lean-forward="true" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
@@ -42,6 +83,8 @@
     <option name="width" value="1400" />
     <option name="height" value="1000" />
   </component>
+  <component name="ProjectId" id="1veQHa1NGi0EzC8zUoUkSr1bkfX" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
       <flattenPackages />
@@ -79,36 +122,16 @@
       </pane>
     </panes>
   </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
-      <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
-      </list>
-    </option>
-  </component>
-  <component name="RunManager" selected="Application.Test">
-    <configuration name="Test" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <option name="MAIN_CLASS_NAME" value="Test" />
-      <option name="VM_PARAMETERS" />
-      <option name="PROGRAM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="omd" />
-      <envs />
-    </configuration>
+  <component name="RunManager">
     <configuration default="true" type="Applet" factoryName="Applet">
       <option name="HTML_USED" value="false" />
       <option name="WIDTH" value="400" />
@@ -150,12 +173,6 @@
       <envs />
       <patterns />
     </configuration>
-    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
-      <module name="" />
-      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
-      <option name="PROGRAM_PARAMETERS" />
-      <predefined_log_file id="idea.log" enabled="true" />
-    </configuration>
     <configuration default="true" type="Remote" factoryName="Remote">
       <option name="USE_SOCKET_TRANSPORT" value="true" />
       <option name="SERVER_MODE" value="false" />
@@ -190,15 +207,28 @@
       <properties />
       <listeners />
     </configuration>
-    <recent_temporary>
-      <list size="1">
-        <item index="0" class="java.lang.String" itemvalue="Application.Test" />
-      </list>
-    </recent_temporary>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file id="idea.log" enabled="true" />
+    </configuration>
+    <configuration name="Test" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <option name="MAIN_CLASS_NAME" value="Test" />
+      <option name="VM_PARAMETERS" />
+      <option name="PROGRAM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="ENABLE_SWING_INSPECTOR" value="false" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <module name="omd" />
+      <envs />
+    </configuration>
   </component>
-  <component name="ShelveChangesManager" show_recycled="false">
-    <option name="remove_strategy" value="false" />
-  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="316a71cf-00ac-42d2-bbfa-d452a9d45d70" name="Default" comment="" />
@@ -241,12 +271,20 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager />
-    <watches-manager />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/Test.java">

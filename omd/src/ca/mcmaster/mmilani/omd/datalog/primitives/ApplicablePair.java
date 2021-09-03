@@ -1,10 +1,5 @@
 package ca.mcmaster.mmilani.omd.datalog.primitives;
 
-import ca.mcmaster.mmilani.omd.datalog.Assignment;
-import ca.mcmaster.mmilani.omd.datalog.Program;
-
-import java.util.Iterator;
-
 public class ApplicablePair {
     public Assignment assignment;
     public Rule rule;
