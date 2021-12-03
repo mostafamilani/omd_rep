@@ -14,6 +14,9 @@ import static ca.mcmaster.mmilani.omd.datalog.executer.SyntacticAnalyzer.buildDe
 
 public class TerminationAnalyzer {
     public static boolean terminates(Program program, Map<Position, Node> graph, Set<Position> cyclicPositions) {
+        if (!cyclicPositions.isEmpty()) {
+            return false;
+        }
         if (cyclicPositions.isEmpty()) {
 //            System.out.println("There is no position with infinite rank!");
             return true;
@@ -67,7 +70,8 @@ public class TerminationAnalyzer {
     public static void main(String[] args) throws IOException {
 //        String pathname = "C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\slinear-1.txt";
 //        String pathname = "C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\test_data\\component-test-2.txt";
-        String pathname = "C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\synthetic\\program-20.txt";
+//        String pathname = "/home/cqadev/Desktop/chase-termination/programs/synthetic-at-rules/program-8.txt";
+        String pathname = "/home/cqadev/IdeaProjects/omd_rep/omd/dataset/test_data/test-complex.txt";
         File in = new File(pathname);
         Program program = Parser.parseProgram(in);
         if (!SyntacticAnalyzer.isSimpleLinear(program.tgds)) {

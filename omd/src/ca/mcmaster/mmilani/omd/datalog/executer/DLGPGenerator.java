@@ -4,39 +4,39 @@ import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Fact;
 import ca.mcmaster.mmilani.omd.datalog.primitives.TGD;
-import ca.mcmaster.mmilani.omd.datalog.synthesizer.ProgramGenerator;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
 
 public class DLGPGenerator {
 
     public static void main(String[] args) throws IOException {
-        File dir = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\synthetic");
+//        String args0 = "/home/cqadev/Desktop/chase-termination/programs/synthetic-at-arity/";
+//        String args0 = "/home/cqadev/Desktop/chase-termination/programs/synthetic-at-arity/";
+//        String args0 = "/home/cqadev/Desktop/chase-termination/programs/synthetic-at-arity/";
+        File dir = new File(args[0]);
         File[] dlFiles = dir.listFiles((dir1, name) -> name.endsWith(".txt"));
 
         for (File dlFile : dlFiles) {
             try {
+                String name = dir.getAbsolutePath() + "/" + dlFile.getName().substring(0, dlFile.getName().lastIndexOf(".")) + ".dlgp";
+                File outFile = new File(name);
+                if (outFile.exists()) continue;
+                outFile.createNewFile();
                 Program program = Parser.parseProgram(dlFile);
                 program.addDummies();
-                String name = dir.getAbsolutePath() + "\\" + dlFile.getName().substring(0, dlFile.getName().lastIndexOf(".")) + ".dlgp";
-                printProgram(name, program, false);
+                printProgram(outFile, program, false);
                 System.out.println(dlFile.getName() + " processed! \n");
             } catch (Throwable e) {
                 e.printStackTrace();
                 System.out.println("Cannot parse " + dlFile.getName() + "! \n");
             }
         }
-
     }
 
-    public static void printProgram(String path, Program program, boolean printParameters) throws IOException {
-        File file = new File(path);
-        file.createNewFile();
-        FileWriter out = new FileWriter(file);
-
+    public static void printProgram(File outFile, Program program, boolean printParameters) throws IOException {
+        FileWriter out = new FileWriter(outFile);
         out.write("@facts\n");
         if (program.edb != null) {
             for (Fact fact : program.edb.getFacts()) {

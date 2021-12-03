@@ -37,4 +37,7 @@ public class TGD extends Rule<Conjunct, Conjunct> {
         return head + ":-" + body;
     }
 
+    public String predicateString() {
+        return body.getAtoms().get(0).predicate.toString() + head.getAtoms().get(0).predicate.toString();
+    }
 }

@@ -7,7 +7,7 @@ import ca.mcmaster.mmilani.omd.datalog.primitives.Node;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Position;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Predicate;
 import ca.mcmaster.mmilani.omd.datalog.primitives.TGD;
-import it.unibas.lunatic.LunaticConfiguration;
+/*import it.unibas.lunatic.LunaticConfiguration;
 import it.unibas.lunatic.Scenario;
 import it.unibas.lunatic.model.chase.chasede.DEChaserFactory;
 import it.unibas.lunatic.model.chase.chasede.operators.mainmemory.TerminationException;
@@ -16,7 +16,7 @@ import it.unibas.lunatic.model.chase.commons.ChaseStats;
 import it.unibas.lunatic.model.chase.commons.operators.ChaserFactoryMC;
 import it.unibas.lunatic.persistence.DAOConfiguration;
 import it.unibas.lunatic.persistence.DAOMCScenario;
-import it.unibas.lunatic.utility.LunaticUtility;
+import it.unibas.lunatic.utility.LunaticUtility;*/
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import speedy.utility.PrintUtility;
@@ -33,7 +33,7 @@ import static ca.mcmaster.mmilani.omd.datalog.executer.TerminationAnalyzer.termi
 public class OntologyAnalyzer {
     private static Logger logger = LoggerFactory.getLogger(OntologyAnalyzer.class);
 
-    private final static DAOMCScenario daoScenario = new DAOMCScenario();
+//    private final static DAOMCScenario daoScenario = new DAOMCScenario();
 
 
     private static String AVG_ARITY = "avg_arity";
@@ -62,11 +62,13 @@ public class OntologyAnalyzer {
 
     public static void main(String[] args) throws Exception {
         String filepath = args[0];
-        String dirpath = filepath.substring(0, filepath.lastIndexOf("\\"));
+        System.out.println("filepath = " + filepath);
+        String dirpath = filepath.substring(0, filepath.lastIndexOf("/"));
 
-        String ontologyName = filepath.substring(filepath.lastIndexOf("\\") + 1, filepath.lastIndexOf("."));
-        String resultFileName = dirpath + "\\" + ontologyName + ".res";
-        if (!AnalyzerExec.checkOption(args, "-r") && new File(resultFileName).exists())
+        String ontologyName = filepath.substring(filepath.lastIndexOf("/") + 1, filepath.lastIndexOf("."));
+        String resultFileName = dirpath + "/" + ontologyName + ".res";
+        boolean exists = new File(resultFileName).exists();
+        if (!AnalyzerExec.checkOption(args, "-r") && exists)
         {
             System.out.println(ontologyName + " is already processed!");
             return;
@@ -82,11 +84,11 @@ public class OntologyAnalyzer {
         result.put(TIME_PARSING, (endTime - startTime) / 1000000F);
 
         /* Loading EDB information */
-        if (AnalyzerExec.checkOption(args, "-d")) {
+        /*if (AnalyzerExec.checkOption(args, "-d")) {
             String dbname = AnalyzerExec.getOptionValue(args, "-d", 1);
             String configFile = AnalyzerExec.getOptionValue(args, "-d", 2);
             program.loadRecordCounts(dbname, configFile);
-        }
+        }*/
 
         /* Termination analysis only works for simple linear onotlogies.
            The result is trivial if the ontology's ABox or TBox is empty */
@@ -106,72 +108,74 @@ public class OntologyAnalyzer {
 
 
         /* Exporting the results */
-        exportResults(resultFileName, result);
+        exportResults(resultFileName, result, AnalyzerExec.checkOption(args, "-a"));
         System.out.println("Processing " + program.name + " completed!");
     }
 
     /* Write the result map as key values in the file specified by "filename"
     * */
-    private static void exportResults(String filename, Map<String, Object> result) throws IOException {
+    private static void exportResults(String filename, Map<String, Object> result, boolean append) throws IOException {
         File outfile = new File(filename);
-        outfile.createNewFile();
-        FileWriter out = new FileWriter(outfile);
+        if (!outfile.exists())
+            outfile.createNewFile();
+        FileWriter out = new FileWriter(outfile, append);
         List<String> keys = new ArrayList(result.keySet());
         Collections.sort(keys);
         for (String key : keys) {
-            out.write(key + ": " + result.get(key) + "\n");
+            if (!append || key.equals(TIME_TERMINATES_GRAPH))
+                out.write(key + ": " + result.get(key) + "\n");
         }
         out.close();
     }
 
-    private static void runChaseLunatic(Map<String, Object> result, Program program, String dirpath, String[] inOptions) throws Exception {
-        System.out.println("Running the chase for " + program.name + "...");
-        String scenarioFileName = dirpath + "\\" + program.name + ".xml";
-        File outputfile = new File(scenarioFileName);
-        if (!AnalyzerExec.checkOption(inOptions, "-r") || !new File(scenarioFileName).exists())
-            ScenarioGenerator.generateScenario(program, outputfile);
-
-        try {
-            List<String> options = new ArrayList<String>();
-            options.add(scenarioFileName);
-            options.add("-printTargetStats=true");
-            options.add("-chaseMode=unrestricted-skolem");
-            options.add("-printsteps=true");
-            String fileScenario = options.get(0);
-            String chaseMode = LunaticUtility.getChaseMode(options);
-            DAOConfiguration daoConfig = new DAOConfiguration();
-            daoConfig.setImportData(false);
-            daoConfig.setUseEncodedDependencies(true);
-            daoConfig.setUseCompactAttributeName(true);
-            daoConfig.setChaseMode(chaseMode);
-            LunaticUtility.applyCommandLineOptions(daoConfig, options);
-            Scenario scenario = daoScenario.loadScenario(fileScenario, daoConfig);
-            LunaticConfiguration conf = scenario.getConfiguration();
-            LunaticUtility.applyCommandLineOptions(conf, options);
-            conf.setCleanSchemasOnStartForDEScenarios(false);
-            conf.setRecreateDBOnStart(false);
-            conf.setExportSolutions(false);
-            conf.setExportChanges(false);
-            conf.setPrintResults(false);
-            scenario.getQueries().clear();//Handled in MainExpExport
-            scenario.getSQLQueries().clear(); //Handled in MainExpExport
-            if (scenario.isDEDScenario()) {
-                DEDChaserFactory.getChaser(scenario).doChase(scenario);
-            } else if (scenario.isDEScenario()) {
-                DEChaserFactory.getChaser(scenario).doChase(scenario);
-            } else if (scenario.isMCScenario()) {
-                ChaserFactoryMC.getChaser(scenario).doChase(scenario);
-            } else {
-                throw new IllegalArgumentException("Scenario non supported!");
-            }
-            if (LunaticConfiguration.isPrintSteps()) System.out.println(ChaseStats.getInstance().toString());
-            PrintUtility.printMessage("-> ST-TGD time: " + ChaseStats.getInstance().getStat(ChaseStats.STTGD_TIME) + " ms");
-            result.put(TERMINATES_CHASE, true);
-        } catch (TerminationException e) {
-            result.put(TERMINATES_CHASE, false);
-        }
-        result.put(TIME_TERMINATES_CHASE, ChaseStats.getInstance().getStat(ChaseStats.TGD_TIME));
-    }
+//    private static void runChaseLunatic(Map<String, Object> result, Program program, String dirpath, String[] inOptions) throws Exception {
+//        System.out.println("Running the chase for " + program.name + "...");
+//        String scenarioFileName = dirpath + "\\" + program.name + ".xml";
+//        File outputfile = new File(scenarioFileName);
+//        if (!AnalyzerExec.checkOption(inOptions, "-r") || !new File(scenarioFileName).exists())
+//            ScenarioGenerator.generateScenario(program, outputfile);
+//
+//        try {
+//            List<String> options = new ArrayList<String>();
+//            options.add(scenarioFileName);
+//            options.add("-printTargetStats=true");
+//            options.add("-chaseMode=unrestricted-skolem");
+//            options.add("-printsteps=true");
+//            String fileScenario = options.get(0);
+//            String chaseMode = LunaticUtility.getChaseMode(options);
+//            DAOConfiguration daoConfig = new DAOConfiguration();
+//            daoConfig.setImportData(false);
+//            daoConfig.setUseEncodedDependencies(true);
+//            daoConfig.setUseCompactAttributeName(true);
+//            daoConfig.setChaseMode(chaseMode);
+//            LunaticUtility.applyCommandLineOptions(daoConfig, options);
+//            Scenario scenario = daoScenario.loadScenario(fileScenario, daoConfig);
+//            LunaticConfiguration conf = scenario.getConfiguration();
+//            LunaticUtility.applyCommandLineOptions(conf, options);
+//            conf.setCleanSchemasOnStartForDEScenarios(false);
+//            conf.setRecreateDBOnStart(false);
+//            conf.setExportSolutions(false);
+//            conf.setExportChanges(false);
+//            conf.setPrintResults(false);
+//            scenario.getQueries().clear();//Handled in MainExpExport
+//            scenario.getSQLQueries().clear(); //Handled in MainExpExport
+//            if (scenario.isDEDScenario()) {
+//                DEDChaserFactory.getChaser(scenario).doChase(scenario);
+//            } else if (scenario.isDEScenario()) {
+//                DEChaserFactory.getChaser(scenario).doChase(scenario);
+//            } else if (scenario.isMCScenario()) {
+//                ChaserFactoryMC.getChaser(scenario).doChase(scenario);
+//            } else {
+//                throw new IllegalArgumentException("Scenario non supported!");
+//            }
+//            if (LunaticConfiguration.isPrintSteps()) System.out.println(ChaseStats.getInstance().toString());
+//            PrintUtility.printMessage("-> ST-TGD time: " + ChaseStats.getInstance().getStat(ChaseStats.STTGD_TIME) + " ms");
+//            result.put(TERMINATES_CHASE, true);
+//        } catch (TerminationException e) {
+//            result.put(TERMINATES_CHASE, false);
+//        }
+//        result.put(TIME_TERMINATES_CHASE, ChaseStats.getInstance().getStat(ChaseStats.TGD_TIME));
+//    }
 
     private static void processSyntax(Map<String, Object> result, Program program) throws IOException {
             long endTime, startTime;

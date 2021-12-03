@@ -3,6 +3,7 @@ package ca.mcmaster.mmilani.omd.datalog.synthesizer;
 import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 import ca.mcmaster.mmilani.omd.datalog.engine.Schema;
 import ca.mcmaster.mmilani.omd.datalog.executer.AnalyzerExec;
+import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 import ca.mcmaster.mmilani.omd.datalog.executer.DLGPGenerator;
 
@@ -279,7 +280,9 @@ public class ProgramGenerator {
                         Schema localSchema = pruneSchema(schema, arity_range, n_predicates);
                         createProgramSchema(program, localSchema, n_predicates, arity_range);
                         generateRandomRules(program, n_rules, r_join, r_exist, n_body, n_head);
-                        DLGPGenerator.printProgram("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\synthetic\\program-" + i + ".txt", program, true);
+                        String outfilename = "C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\synthetic\\program-" + i + ".txt";
+                        File outfile = new File(outfilename);
+                        DLGPGenerator.printProgram(outfile, program, true);
                         i++;
                     }
                 }
@@ -314,4 +317,5 @@ public class ProgramGenerator {
     private static String[] getProfiles(String configs) {
         return configs.split(",");
     }
+
 }

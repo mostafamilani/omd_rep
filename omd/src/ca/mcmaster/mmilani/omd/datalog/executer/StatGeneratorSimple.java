@@ -89,7 +89,7 @@ public class StatGeneratorSimple {
     public static int countEdges(Map<Position, Node> graph) {
         int count = 0;
         for (Node node : graph.values()) {
-            count += node.nexts.size() + node.nextSpecials.size();
+            count += node.nexts.size() + node.nextNodes(false).size();
         }
         return count;
     }
@@ -97,7 +97,7 @@ public class StatGeneratorSimple {
     static int countSepcialEdges(Map<Position, Node> graph) {
         int count = 0;
         for (Node node : graph.values()) {
-            count += node.nextSpecials.size();
+            count += node.nextSpecialNodes().size();
         }
         return count;
     }

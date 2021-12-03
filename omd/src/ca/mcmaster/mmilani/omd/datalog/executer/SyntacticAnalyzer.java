@@ -4,6 +4,7 @@ import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
 import ca.mcmaster.mmilani.omd.datalog.tools.syntax.SearchSetting;
+import com.google.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,6 +113,7 @@ public class SyntacticAnalyzer {
             if (node.index == -1) strongConnect(node, setting);
         }
         HashSet<Node> result = new HashSet<>();
+//        checkComponents(setting.components);
         for (FCComponent component : setting.components) {
             if (component.special) {
                 result.addAll(component.members);
@@ -122,6 +124,48 @@ public class SyntacticAnalyzer {
         System.out.println("#components: " + program.nComponents);
         System.out.println("#special components: " + program.nSpecialComponents);
         return result;
+    }
+
+    private static void checkComponents(Set<FCComponent> components) {
+        System.out.println("Checking components...");
+        for (FCComponent component : components) {
+            checkComponent(component.members);
+            for (FCComponent c2 : components) {
+                if (c2 != component) {
+                    checkComponentPair(component,c2);
+                }
+            }
+        }
+    }
+
+    private static void checkComponentPair(FCComponent c1, FCComponent c2) {
+        if (isLinked(c1,c2) && isLinked(c2,c1))
+            throw new RuntimeException("Between components error!");
+    }
+
+    private static boolean isLinked(FCComponent c1, FCComponent c2) {
+        for (Node n1 : c1.members) {
+            for (Node n2 : c2.members) {
+                if (isPathBetween(n1,n2))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private static void checkComponent(Set<Node> members) {
+        if (members.size() == 1)
+            return;
+        Node n0 = null;
+        for (Node n1 : members) {
+            if (n0==null) n0 = n1;
+            List<Node> path = getPathBetween(n1, n1);
+            if (path == null)
+                throw new RuntimeException("Within components error!");
+            path = getPathBetween(n0, n1);
+            if (path == null)
+                throw new RuntimeException("Within components error!");
+        }
     }
 
     public static Set<Position> getPositions(Set<Node> nodes) {
@@ -138,21 +182,16 @@ public class SyntacticAnalyzer {
         setting.globalIndex++;
         setting.stack.push(node);
         node.onStack = true;
-
-        Set<Node> nexts = new HashSet<>(node.nexts);
-        nexts.addAll(node.nextSpecials);
-
-        for (Node next : nexts) {
-            if ((next.index == -1 || next.onStack) && node.nextSpecials.contains(next))
+        for (Edge next : node.nexts) {
+            if (next.destination.index == -1 || next.destination.onStack)
                 setting.stack.push(null);
-            if (next.index == -1) {
-                strongConnect(next, setting);
-                node.lowLink = Math.min(node.lowLink, next.lowLink);
-            } else if (next.onStack){
-                node.lowLink = Math.min(node.lowLink, next.index);
+            if (next.destination.index == -1) {
+                strongConnect(next.destination, setting);
+                node.lowLink = Math.min(node.lowLink, next.destination.lowLink);
+            } else if (next.destination.onStack){
+                node.lowLink = Math.min(node.lowLink, next.destination.index);
             }
         }
-
         if (node.lowLink == node.index) {
             FCComponent component = new FCComponent();
             Node next;
@@ -171,8 +210,81 @@ public class SyntacticAnalyzer {
         }
     }
 
+    /*public static Set<Set<Node>> Search(Set<Node> graph)
+    {
+        Set<Set<Node>> stronglyConnectedComponents = new HashSet<>();
+
+        int preCount = 0;
+        Stack stack = new Stack<Node>();
+
+        Stack minStack = new Stack<Node>();
+        var enumeratorStack = new Stack<IEnumerator<int>>();
+        var enumerator = Enumerable.Range(0, graph.VertexCount).GetEnumerator();
+        while (true)
+        {
+            if (enumerator.MoveNext())
+            {
+                int v = enumerator.Current;
+                if (!visited[v])
+                {
+                    low[v] = preCount++;
+                    visited[v] = true;
+                    stack.Push(v);
+                    int min = low[v];
+                    // Level down
+                    minStack.Push(min);
+                    enumeratorStack.Push(enumerator);
+                    enumerator = Enumerable.Range(0, graph.OutgoingEdgeCount(v))
+                            .Select(i => graph.OutgoingEdge(v, i).Target)
+                    .GetEnumerator();
+                }
+                else if (minStack.Count > 0)
+                {
+                    int min = minStack.Pop();
+                    if (low[v] < min) min = low[v];
+                    minStack.Push(min);
+                }
+            }
+            else
+            {
+                // Level up
+                if (enumeratorStack.Count == 0) break;
+
+                enumerator = enumeratorStack.Pop();
+                int v = enumerator.Current;
+                int min = minStack.Pop();
+
+                if (min < low[v])
+                {
+                    low[v] = min;
+                }
+                else
+                {
+                    List<int> component = new List<int>();
+
+                    int w;
+                    do
+                    {
+                        w = stack.Pop();
+                        component.Add(w);
+                        low[w] = graph.VertexCount;
+                    } while (w != v);
+                    stronglyConnectedComponents.Add(component);
+                }
+
+                if (minStack.Count > 0)
+                {
+                    min = minStack.Pop();
+                    if (low[v] < min) min = low[v];
+                    minStack.Push(min);
+                }
+            }
+        }
+        return stronglyConnectedComponents;
+    }*/
+
     public static Set<Node> getInfiniteRankNodes(Map<Position, Node> dGraph, Set<Node> nodesInSpecialCycle) {
-        return findDescendants(nodesInSpecialCycle);
+        return findDescendants(nodesInSpecialCycle,false);
     }
 
     public static Set<Position> getInfiniteRankPositions(Map<Position, Node> dGraph, Set<Node> nodesInSpecialCycle) {
@@ -187,56 +299,80 @@ public class SyntacticAnalyzer {
                 Set<Node> bodyNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.body));
                 Set<Node> headNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.head));
                 for (Node b : bodyNodes) {
-                    b.nexts.addAll(headNodes);
                     for (Variable evar : rule.existentialVars) {
-                        b.nextSpecials.addAll(fetchNode(graph, getPositionsInConjunct(evar, rule.head)));
+                        Set<Node> nextSpecials = fetchNode(graph, getPositionsInConjunct(evar, rule.head));
+                        for (Iterator<Node> iterator = nextSpecials.iterator(); iterator.hasNext(); ) {
+                            Node next = iterator.next();
+                            b.addNext(next, rule, true);
+                        }
                     }
+                    for (Iterator<Node> iterator = headNodes.iterator(); iterator.hasNext(); ) {
+                        Node next = iterator.next();
+                        b.addNext(next, rule, false);
+                    }
+
                 }
             }
         }
         return graph;
     }
 
-    public static int isPathBetween(Node n1, Node n2) {
+    public static int isPathBetweenSimple(Node n1, Node n2) {
         Set<Node> visited = new HashSet<>();
-        return isPathBetween(n1, n2, visited);
+        return isPathBetweenSimple(n1, n2, visited);
     }
 
-    public static int isPathBetween(Node n1, Node n2, Set<Node> visited) {
-        Set<Node> nexts = new HashSet<>(n1.nexts);
-        nexts.addAll(n1.nextSpecials);
-        for (Node next : nexts) {
-            boolean special = n1.nextSpecials.contains(next);
-            if (next.equals(n2)) {
+    public static int isPathBetweenSimple(Node n1, Node n2, Set<Node> visited) {
+        for (Edge next : n1.nexts) {
+            if (next.destination.equals(n2)) {
                 visited.add(n2);
-                return special ? 2 : 1;
+                return next.special ? 2 : 1;
             }
             if (!visited.contains(next)) {
-                visited.add(next);
-                int path = isPathBetween(next, n2, visited);
+                visited.add(next.destination);
+                int path = isPathBetweenSimple(next.destination, n2, visited);
                 if (path == 2)
                     return 2;
                 else if (path == 1)
-                    return special ? 2 : 1;
+                    return next.special ? 2 : 1;
             }
         }
         return 0;
     }
 
-    public static Set<Node> findAncestors(Set<Node> graph, Set<Node> nodes) {
-        Map<Node, Node> invertedGraph = generateInvertedGraph(graph);
-        Set<Node> invertNodes = new HashSet<>();
-        for (Node node : nodes) {
-            invertNodes.add(invertedGraph.get(node));
-        }
-        Set<Node> invertDescendants = findDescendants(invertNodes);
-        Map<Node, Node> temp = getReverseMap(invertedGraph);
-        HashSet<Node> result = new HashSet<>();
-        for (Node node : invertDescendants) {
-            result.add(temp.get(node));
-        }
-        return result;
+    public static boolean  isPathBetween(Node n1, Node n2) {
+        List<Node> path = getPathBetween(n1, n2);
+        return path != null;
     }
+
+    public static List<Node> getPathBetween(Node n1, Node n2) {
+        ArrayList<Node> path = new ArrayList<>();
+        Stack<Node> stack = new Stack<>();
+        Set<Node> visited = new HashSet<>();
+        visited.add(n1);
+        stack.push(n1);
+        while(!stack.isEmpty()) {
+            Node top = stack.pop();
+            path.add(top);
+            boolean backtrack = true;
+            for (Node next : top.nextNodes(false)) {
+                if (next.equals(n2)) {
+                    path.add(next);
+                    return path;
+                }
+                if (!visited.contains(next)) {
+                    visited.add(next);
+                    stack.push(next);
+                    backtrack = false;
+                }
+            }
+            if (backtrack)
+                path.remove(path.size()-1);
+        }
+        return null;
+    }
+
+
 
     public static Map<Node, Node> getReverseMap(Map<Node, Node> map) {
         Map<Node, Node> result = new HashMap<>();
@@ -246,7 +382,7 @@ public class SyntacticAnalyzer {
         return result;
     }
 
-    public static Set<Node> findDescendants(Set<Node> nodes) {
+    public static Set<Node> findDescendants(Set<Node> nodes, boolean reverse) {
         Set<Node> ancestors = new HashSet<Node>();
         Set<Node> newAncestors = new HashSet<Node>();
 
@@ -257,8 +393,7 @@ public class SyntacticAnalyzer {
             for (Node node : newAncestors) {
                 if (visited.contains(node)) continue;
                 ancestors.add(node);
-                temp.addAll(node.nexts);
-                temp.addAll(node.nextSpecials);
+                temp.addAll(node.nextNodes(reverse));
                 visited.add(node);
             }
             temp.removeAll(ancestors);
@@ -267,24 +402,8 @@ public class SyntacticAnalyzer {
         return ancestors;
     }
 
-    public static Map<Node, Node> generateInvertedGraph(Set<Node> graph) {
-        Map<Node, Node> result = new HashMap<>();
-        for (Node node : graph) {
-            if (!result.containsKey(node)) result.put(node, new Node(node.p));
-            Node nodeInver = result.get(node);
-            Set<Node> nexts = new HashSet<>(node.nexts);
-            nexts.addAll(node.nextSpecials);
-            for (Node next : nexts) {
-                if (!result.containsKey(next)) result.put(next, new Node(next.p));
-                Node nextInvert = result.get(next);
-                nextInvert.nexts.add(nodeInver);
-            }
-        }
-        return result;
-    }
-
     public static Set<Position> findAncestors(Map<Position, Node> graph, Set<Position> positions) {
-        return getPositions(findAncestors(new HashSet<>(graph.values()), getNodes(graph, positions)));
+        return getPositions(findDescendants(getNodes(graph, positions), true));
     }
 
     public static Set<Node> getNodes(Map<Position, Node> graph, Set<Position> positions) {
@@ -441,8 +560,9 @@ public class SyntacticAnalyzer {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\synthetic\\program-1.txt");
+    public static void main4(String[] args) throws IOException {
+        File in = new File(
+                "/home/cqadev/Desktop/chase-termination/programs/synthetic-at-arity/program-569-r.txt");
 //        File in = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\owl-dl\\00754.txt");
         long startTime = System.nanoTime();
         Program program = Parser.parseProgram(in);
@@ -482,8 +602,65 @@ public class SyntacticAnalyzer {
         if (size == 0) return 0;
         int totalFanout = 0;
         for (Node node : graph.values()) {
-            totalFanout += node.nexts.size() + node.nextSpecials.size();
+            totalFanout += node.nextNodes(false).size();
         }
         return totalFanout / size;
     }
+
+    public static Node getNode(Set<Node> nodes, String label) {
+        for (Node next : nodes) {
+            if (next.toString().equals(label)) return next;
+        }
+        return null;
+    }
+
+    public static Program simplify(Program program) {
+        Program result = new Program();
+        Set<TGD> newTGDs = new HashSet<>();
+        for (TGD tgd : program.tgds) {
+            simplify(tgd, program);
+        }
+        return result;
+    }
+
+    private static Set<TGD> simplify(TGD tgd, Program program) {
+        if (tgd.body.getAtoms().size() != 1) throw new RuntimeException("Simplifying a non linear program!");
+        Atom b = tgd.body.getAtoms().get(0);
+        Atom h = tgd.head.getAtoms().get(0);
+//        Atom body = generateAllUnifications(program, b);
+//        Atom head = generateAllUnifications(program, h);
+return null;
+    }
+
+    private static Atom generateAllUnifications(Atom a) {
+        Object[] vars = a.getVariables().toArray();
+        Set<Map<Variable, Variable>> s = new HashSet<>();
+        s.add(new HashMap<>());
+        for (int i = 0; i < vars.length; i++) {
+            Variable v1 = (Variable) vars[i];
+            Set<Map<Variable, Variable>> newS = new HashSet<>();
+            for (int j = i; j > 0; j--) {
+                Variable v2 = (Variable) vars[j];
+                for (Map<Variable, Variable> u : s) {
+                    HashMap<Variable, Variable> newU = new HashMap<>();
+                    copyMap(newU, u);
+                    newU.put(v1,v2);
+                    newS.add(newU);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void copyMap(HashMap<Variable, Variable> dest, Map<Variable, Variable> src) {
+        for (Variable key : src.keySet()) {
+            dest.put(key, src.get(key));
+        }
+    }
+
+    public static void main(String[] args) {
+        Atom atom = Parser.parse("P(x,y,z,w)", true, new Program(), new TGD());
+        generateAllUnifications(atom);
+    }
 }
+
