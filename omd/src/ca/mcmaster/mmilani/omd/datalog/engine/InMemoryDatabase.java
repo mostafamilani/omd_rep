@@ -48,7 +48,7 @@ public class InMemoryDatabase extends Database {
         for (Conjunct conjunct : cs) {
             Set<Assignment> evs = evaluate(conjunct);
             for (Assignment e : evs) {
-                Assignment filter = filter(e, q.headVariables);
+                Assignment filter = filter(e, new HashSet(q.headVariables));
                 if (filter != null) evaluations.add(filter);
             }
         }

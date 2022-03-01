@@ -21,7 +21,7 @@ import static ca.mcmaster.mmilani.omd.datalog.executer.SyntacticAnalyzer.getNode
 import static ca.mcmaster.mmilani.omd.datalog.executer.SyntacticAnalyzer.getPositions;
 
 public class GraphViewer {
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         System.setProperty("org.graphstream.ui", "javafx");
 
 
@@ -61,5 +61,5 @@ public class GraphViewer {
         }
 //        graph.setAttribute("ui.stylesheet", "C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\g.css");
         graph.display();
-    }
+    }*/
 }

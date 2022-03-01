@@ -22,7 +22,7 @@ public class ConjunctGadget {
     }
 
     public static boolean mapTo(Conjunct c1, Conjunct c2) {
-        Set<Assignment> assignments = generateAllAssignments(c1.getVariables(), c2.getVariables());
+        Set<Assignment> assignments = generateAllAssignments(new HashSet<>(c1.getVariables()), new HashSet<>(c2.getVariables()));
         for (Assignment assignment : assignments) {
             if (equates(assignment, c1,c2)) return true;
         }

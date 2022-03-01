@@ -3,16 +3,20 @@ package ca.mcmaster.mmilani.omd.datalog.executer;
 import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.primitives.*;
+import ca.mcmaster.mmilani.omd.datalog.synthesizer.ProgramGenerator;
 import ca.mcmaster.mmilani.omd.datalog.tools.syntax.SearchSetting;
-import com.google.common.collect.Maps;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.function.UnaryOperator;
 
 import static ca.mcmaster.mmilani.omd.datalog.executer.TerminationAnalyzer.terminates;
 
 public class SyntacticAnalyzer {
+    public static String[] annotations = generateAnnotations(10);
+
+    public static int[] annotationCounts = {1,2,5,15,52,203,877,4140,21147,115975,678570,4213597,27644437};
+
     public static boolean isLinear(Set<TGD> rules) {
         for (TGD rule : rules) {
             if (!isLinear(rule))
@@ -108,9 +112,13 @@ public class SyntacticAnalyzer {
     }
 
     public static Set<Node> getNodesInSpecialCycle(Map<Position, Node> dGraph, Program program) {
+//        System.out.println("Finding connected components! #nodes: " + dGraph.keySet().size());
         SearchSetting setting = new SearchSetting();
         for (Node node : dGraph.values()) {
-            if (node.index == -1) strongConnect(node, setting);
+            if (node.index == -1) {
+                setting.components.addAll(strongConnectNonR(node));
+//                strongConnect(node, setting);
+            }
         }
         HashSet<Node> result = new HashSet<>();
 //        checkComponents(setting.components);
@@ -121,8 +129,8 @@ public class SyntacticAnalyzer {
             }
         }
         program.nComponents = setting.components.size();
-        System.out.println("#components: " + program.nComponents);
-        System.out.println("#special components: " + program.nSpecialComponents);
+//        System.out.println("#components: " + program.nComponents);
+//        System.out.println("#special components: " + program.nSpecialComponents);
         return result;
     }
 
@@ -176,6 +184,64 @@ public class SyntacticAnalyzer {
         return positions;
     }
 
+    public static Set<FCComponent> strongConnectNonR(Node node) {
+        Set<FCComponent> components = new HashSet<>();
+
+        int preCount = 0;
+        Stack stack = new Stack();
+        Stack minStack = new Stack();
+        Stack iterStack = new Stack();
+        Set initi = new HashSet();
+        Edge e = new Edge();
+        initi.add(e);
+        e.destination = node;
+        Iterator<Edge> iterator = initi.iterator();
+//        Set<Node> visited = new HashSet<>();
+        while(true) {
+            if (iterator.hasNext()) {
+                Node v = iterator.next().destination;
+//                if (!visited.contains(v)) {
+                if (v.index == -1) {
+                    v.lowLink = preCount;
+                    preCount++;
+//                    visited.add(v);
+//                    System.out.println("visited.size() = " + visited.size());
+//                    System.out.println("v.p = " + v.p);
+                    v.index = 1;
+                    stack.push(v);
+                    minStack.push(v.lowLink);
+                    iterStack.push(v);
+                    iterStack.push(iterator);
+                    iterator = v.nexts.iterator();
+                } else if (minStack.size() > 0) {
+                    int min = (int) minStack.pop();
+                    if (v.lowLink < min) min = v.lowLink;
+                    minStack.push(min);
+                }
+            } else {
+                if (iterStack.size() == 0) break;
+
+                iterator = (Iterator<Edge>) iterStack.pop();
+                Node v = (Node) iterStack.pop();
+                int min = (int) minStack.pop();
+
+                if (min < v.lowLink) {
+                    v.lowLink = min;
+                } else {
+                    FCComponent component = new FCComponent();
+                    Node wNode;
+                    do {
+                        wNode = (Node) stack.pop();
+                        component.members.add(wNode);
+                        wNode.lowLink = Integer.MAX_VALUE;
+                    } while (!wNode.equals(v));
+                    components.add(component);
+                }
+            }
+        }
+        return components;
+    }
+
     public static void strongConnect(Node node, SearchSetting setting) {
         node.index = setting.globalIndex;
         node.lowLink = setting.globalIndex;
@@ -183,7 +249,9 @@ public class SyntacticAnalyzer {
         setting.stack.push(node);
         node.onStack = true;
         for (Edge next : node.nexts) {
-            if (next.destination.index == -1 || next.destination.onStack)
+            /*if (next.destination.index == -1 || next.destination.onStack)
+                setting.stack.push(null);*/
+            if (next.special)
                 setting.stack.push(null);
             if (next.destination.index == -1) {
                 strongConnect(next.destination, setting);
@@ -198,7 +266,7 @@ public class SyntacticAnalyzer {
             do {
                 next = setting.stack.pop();
                 if (next == null) {
-                    component.special = true;
+                    if (component.members.size() > 0) component.special = true;
                     continue;
                 }
                 next.onStack = false;
@@ -206,7 +274,7 @@ public class SyntacticAnalyzer {
             } while (node != next);
             if (!setting.stack.isEmpty())
                 while(setting.stack.peek() == null) setting.stack.pop();
-            setting.components.add(component);
+            if (component.members.size() > 1) setting.components.add(component);
         }
     }
 
@@ -294,27 +362,30 @@ public class SyntacticAnalyzer {
     public static Map<Position, Node> buildDependencyGraph(Set<TGD> rules) {
         HashMap<Position, Node> graph = new HashMap<>();
         for (TGD rule : rules) {
-            for (Variable variable : rule.variables.values()) {
-                if (!variable.isBody() || !rule.isFrontier(variable)) continue;
-                Set<Node> bodyNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.body));
-                Set<Node> headNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.head));
-                for (Node b : bodyNodes) {
-                    for (Variable evar : rule.existentialVars) {
-                        Set<Node> nextSpecials = fetchNode(graph, getPositionsInConjunct(evar, rule.head));
-                        for (Iterator<Node> iterator = nextSpecials.iterator(); iterator.hasNext(); ) {
-                            Node next = iterator.next();
-                            b.addNext(next, rule, true);
-                        }
-                    }
-                    for (Iterator<Node> iterator = headNodes.iterator(); iterator.hasNext(); ) {
-                        Node next = iterator.next();
-                        b.addNext(next, rule, false);
-                    }
+            updateGraph(graph, rule);
+        }
+        return graph;
+    }
 
+    public static boolean updateGraph(Map<Position, Node> graph, TGD rule) {
+        boolean updated = false;
+        for (Variable variable : rule.variables.values()) {
+            if (!variable.isBody() || !rule.isFrontier(variable)) continue;
+            Set<Node> bodyNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.body));
+            Set<Node> headNodes = fetchNode(graph, getPositionsInConjunct(variable, rule.head));
+            for (Node b : bodyNodes) {
+                for (Variable evar : rule.existentialVars) {
+                    Set<Node> nextSpecials = fetchNode(graph, getPositionsInConjunct(evar, rule.head));
+                    for (Node next : nextSpecials) {
+                        updated = b.addNext(next, rule, true) || updated;
+                    }
+                }
+                for (Node next : headNodes) {
+                    updated = b.addNext(next, rule, false) || updated;
                 }
             }
         }
-        return graph;
+        return updated;
     }
 
     public static int isPathBetweenSimple(Node n1, Node n2) {
@@ -428,7 +499,7 @@ public class SyntacticAnalyzer {
         for (Atom atom : conjunct.getAtoms()) {
             int pos = 0;
             for (Term term : atom.terms) {
-                if (term == variable) {
+                if (term.label.equals(variable.label)) {
                     Position position = new Position(pos, atom.predicate);
                     positions.add(position);
                 }
@@ -615,41 +686,171 @@ public class SyntacticAnalyzer {
     }
 
     public static Program simplify(Program program) {
+        long startTime = System.nanoTime();
         Program result = new Program();
-        Set<TGD> newTGDs = new HashSet<>();
+        int c= 0;
         for (TGD tgd : program.tgds) {
-            simplify(tgd, program);
+            c += simplify(tgd, program);
         }
+        System.out.println("#Total number of rules in the initial program: " + program.tgds.size());
+        System.out.println("#Total number of rules in the simplified program: " + c);
+        long endTime = System.nanoTime();
+        System.out.println("#time (sec) " + ((endTime - startTime) / 1000000000F));
         return result;
     }
 
-    private static Set<TGD> simplify(TGD tgd, Program program) {
+    public static int simplify(TGD tgd, Program program) {
+        int c = 0;
+        System.out.println("#Simplifying rule: " + tgd);
         if (tgd.body.getAtoms().size() != 1) throw new RuntimeException("Simplifying a non linear program!");
-        Atom b = tgd.body.getAtoms().get(0);
-        Atom h = tgd.head.getAtoms().get(0);
-//        Atom body = generateAllUnifications(program, b);
-//        Atom head = generateAllUnifications(program, h);
-return null;
+        List<Variable> vs = tgd.body.getAtoms().get(0).getVariables();
+        for (int i = 0; i < annotationCounts[vs.size()-1]; i++) {
+            String ant = annotations[i].substring(0, vs.size());
+            simplify(program, tgd, ant);
+            c++;
+        }
+        return c;
     }
 
-    private static Atom generateAllUnifications(Atom a) {
-        Object[] vars = a.getVariables().toArray();
-        Set<Map<Variable, Variable>> s = new HashSet<>();
-        s.add(new HashMap<>());
-        for (int i = 0; i < vars.length; i++) {
-            Variable v1 = (Variable) vars[i];
-            Set<Map<Variable, Variable>> newS = new HashSet<>();
-            for (int j = i; j > 0; j--) {
-                Variable v2 = (Variable) vars[j];
-                for (Map<Variable, Variable> u : s) {
-                    HashMap<Variable, Variable> newU = new HashMap<>();
-                    copyMap(newU, u);
-                    newU.put(v1,v2);
-                    newS.add(newU);
-                }
+    public static TGD simplify(Program program, TGD tgd, String ant) {
+        Atom b = tgd.body.getAtoms().get(0);
+        Atom h = tgd.head.getAtoms().get(0);
+        List<Variable> vs = b.getVariables();
+        List<Term> hTerms = new ArrayList<>(h.terms);
+        String hAnnot = "";
+        String completeAn = "";
+        List<Term> newTerms = new ArrayList<>();
+        for (Term var : b.terms) {
+            int index = b.terms.indexOf(var);
+            String s = "" + ant.charAt(index);
+            Variable nVar = vs.get(Integer.parseInt(s, 16)-1);
+            newTerms.add(nVar);
+            completeAn += s;
+
+            if (nVar != var && hTerms.contains(var)) {
+                hTerms.replaceAll(term -> {
+                    if (term == var)
+                        return nVar;
+                    return term;
+                });
             }
         }
-        return null;
+        List<Variable> hvs = new ArrayList<>();
+        for (Term term : hTerms) {
+            if (!hvs.contains(term))
+                hvs.add((Variable) term);
+            hAnnot += "" + (hvs.indexOf(term)+1);
+        }
+        List<Term> temp = new ArrayList<>();
+        for (Term term : hTerms) {
+            if (!temp.contains(term)) temp.add(term);
+        }
+        hTerms = temp;
+        temp = new ArrayList<>();
+        for (Term term : newTerms) {
+            if (!temp.contains(term)) temp.add(term);
+        }
+        newTerms = temp;
+        PositiveAtom nB = new PositiveAtom(program.schema.fetchPredicate(b.predicate.name + "@" + completeAn, b.predicate.arity), newTerms);
+        PositiveAtom nH = new PositiveAtom(program.schema.fetchPredicate(h.predicate.name + "@" + hAnnot, h.predicate.arity), hTerms);
+//        System.out.println(nH + ":-" + nB);
+        TGD result = new TGD();
+        result.body = new Conjunct();
+        result.body.add(nB);
+        result.head = new Conjunct();
+        result.head.add(nH);
+        result.initVars();
+        ProgramGenerator.setExistentialVariables(result);
+        return result;
+    }
+
+    private static boolean match(String a, String b) {
+        for (int i = 0; i < b.length(); i++) {
+        }
+        return false;
+    }
+
+    private static String getAnnotation(Atom a) {
+        List<Term> terms = a.terms;
+        String annotation = "1";
+        for (Term t : terms) {
+            annotation += terms.indexOf(t);
+        }
+        return annotation;
+    }
+
+    private static String[] generateAnnotations(int count) {
+        Set<String> annotations = new HashSet<>();
+        annotations.add("1");
+        for (int i = 2; i <= count; i++) {
+            Set<String> newAns = new HashSet<>();
+            for (int j = i-1; j >= 1; j--) {
+                for (String annotation : annotations) {
+                    int max = 0;
+                    for (int k = 0; k < annotation.length(); k++) {
+                        int n = Integer.parseInt(annotation.charAt(k) + "");
+                        if (n > max) max = n;
+                    }
+                    max++;
+                    String newAn1 = annotation + Integer.toHexString(max);
+                    newAns.add(newAn1);
+                    String newAn2 = annotation + Integer.toHexString(getValueIndex(annotation, j));
+                    newAns.add(newAn2);
+                }
+            }
+//            System.out.println("newAns.size() = " + newAns.size());
+            annotations = newAns;
+        }
+//        System.out.println("# New Annotations " + annotations.size());
+        String res[] = annotations.toArray(new String[annotations.size()]);
+        Arrays.sort(res, Comparator.comparing(o -> new StringBuilder(o).reverse().toString()));
+        return res;
+    }
+
+
+    public static Set<String> generateCompatibleAnnotations(String shape) {
+//        System.out.println(shape);
+        Set<String> annotations = new HashSet<>();
+        annotations.add("1");
+        for (int i = 2; i <= shape.length(); i++) {
+            Set<String> newAns = new HashSet<>();
+            String sh = shape.substring(0, i);
+            for (int j = i-1; j >= 1; j--) {
+                for (String annotation : annotations) {
+                    int max = 0;
+                    for (int k = 0; k < annotation.length(); k++) {
+                        int n = Integer.parseInt(annotation.charAt(k) + "");
+                        if (n > max) max = n;
+                    }
+                    max++;
+                    String newAn1 = annotation + Integer.toHexString(max);
+                    if (isCompatible(newAn1, sh)) newAns.add(newAn1);
+                    String newAn2 = annotation + Integer.toHexString(getValueIndex(annotation, j));
+                    if (isCompatible(newAn2, sh)) newAns.add(newAn2);
+                }
+            }
+            annotations = newAns;
+        }
+        return annotations;
+    }
+
+    public static boolean isCompatible(String rulShape, String currentShape) {
+        if (rulShape.length() != currentShape.length()) return false;
+        if (rulShape.equals(currentShape)) return true;
+        for (int i = 0; i < rulShape.length(); i++) {
+            if (rulShape.charAt(i) < currentShape.charAt(i)) return false;
+        }
+        return true;
+    }
+
+    private static int getValueIndex(String annotation, int j) {
+        int c = Integer.parseInt(annotation.charAt(j-1)+"", 16);
+        for (int i = 0; i < j-2; i++) {
+            int ch = Integer.parseInt(annotation.charAt(i) + "");
+            if (ch == c)
+                return getValueIndex(annotation, c);
+        }
+        return c;
     }
 
     private static void copyMap(HashMap<Variable, Variable> dest, Map<Variable, Variable> src) {
@@ -658,9 +859,51 @@ return null;
         }
     }
 
-    public static void main(String[] args) {
-        Atom atom = Parser.parse("P(x,y,z,w)", true, new Program(), new TGD());
-        generateAllUnifications(atom);
+    public static void main1(String[] args) throws FileNotFoundException {
+        /*for (int i = 0; i < 10; i++) {
+            String atomStr = "P(";
+            for (int j = 0; j <= i; j++) {
+                atomStr += "x" + j + ",";
+            }
+            atomStr = atomStr.substring(0, atomStr.length()-1) + ")";
+            System.out.println("atom = " + atomStr);
+            Atom atom = Parser.parse(atomStr, true, new Program(), new TGD());
+            long startTime = System.nanoTime();
+            generateUnifications(atom);
+            long endTime = System.nanoTime();
+            System.out.println("time (sec) " + ((endTime - startTime) / 1000000000F));
+        }*/
+        PrintStream out = new PrintStream(new FileOutputStream("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\output.txt"));
+        System.setOut(out);
+
+        String[] annotations = null;
+        System.out.println("#################");
+        for (int i = 1; i < 14; i++) {
+            System.out.println("Arity: " + i);
+            long startTime = System.nanoTime();
+            annotations = generateAnnotations(i);
+            long endTime = System.nanoTime();
+            System.out.println("Time (sec) " + ((endTime - startTime) / 1000000000F) + "\n\t");
+        }
+        System.out.println("#################");
+        for (String annt : annotations) {
+            System.out.println(annt);
+        }
+        System.out.println("#################");
+        out.flush();
+    }
+
+    public static void main(String[] args) throws IOException {
+        File dir = new File("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\dataset\\linear");
+        File[] files = dir.listFiles();
+        for (File file : files) {
+            Program program = Parser.parseProgram(file);
+            String outName = file.getAbsolutePath().replace(".txt", "-sim.txt").replace("linear", "simplified");
+            File out = new File(outName);
+            out.createNewFile();
+            System.setOut(new PrintStream(out));
+            simplify(program);
+        }
     }
 }
 

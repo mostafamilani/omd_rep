@@ -29,6 +29,10 @@ public class Program {
 
     private InMemoryDatabase idb = new InMemoryDatabase();
 
+    public Program() {
+        schema = new Schema();
+    }
+
     public Set<Assignment> evaluate(Query q) {
         return idb.evaluate(q);
     }

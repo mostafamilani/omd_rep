@@ -3,7 +3,7 @@ package ca.mcmaster.mmilani.omd.datalog.synthesizer;
 import ca.mcmaster.mmilani.omd.datalog.engine.PersistantDatabase;
 import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 import ca.mcmaster.mmilani.omd.datalog.engine.Schema;
-import ca.mcmaster.mmilani.omd.datalog.executer.AnalyzerExec;
+import ca.mcmaster.mmilani.omd.datalog.executer.OntologyAnalyzer;
 import ca.mcmaster.mmilani.omd.datalog.primitives.Predicate;
 
 import java.io.IOException;
@@ -14,12 +14,12 @@ public class DataGenerator {
     private static int domainSize;
 
     public static void main(String[] args) throws IOException, SQLException {
-        if (AnalyzerExec.checkOption(args, "-s"))
-            createDatabases();
-        if (AnalyzerExec.checkOption(args, "-d"))
+//        if (AnalyzerExec.checkOption(args, "-s"))
+//            createDatabases();
+//        if (AnalyzerExec.checkOption(args, "-d"))
             fillDatabases();
-        if (AnalyzerExec.checkOption(args, "-p"))
-            printDBStats();
+//        if (AnalyzerExec.checkOption(args, "-p"))
+//            printDBStats();
     }
 
     private static void fillDatabases() throws SQLException, IOException {
@@ -97,7 +97,7 @@ public class DataGenerator {
     }
 
     private static void fillDatabases(Connection conn, int no_records, Schema schema) throws SQLException {
-        Map<Predicate, Integer> recordCounts = new HashMap<>();
+        /*Map<Predicate, Integer> recordCounts = new HashMap<>();
         int pCount = schema.predicates.values().size();
         Predicate[] predicates = new Predicate[pCount];
         int i = 0;
@@ -113,6 +113,13 @@ public class DataGenerator {
         for (Predicate predicate : recordCounts.keySet()) {
             insertRandomRecords(conn, predicate, recordCounts.get(predicate));
             System.out.println("Finished table: " + predicate.name);
+        }*/
+        for (Predicate p : schema.predicates.values()) {
+            for (int i = 0; i < no_records; i+=20000) {
+                insertRandomRecords(conn, p, 20000);
+                System.out.println("Inserted 1k records in " + p.name);
+            }
+            System.out.println("Finished table: " + p.name + " #records " + no_records);
         }
     }
 
@@ -170,5 +177,97 @@ public class DataGenerator {
         }
         statement.executeBatch();
         return Schema.loadSchema(conn);
+    }
+
+    private static Set<String> findShapes(String dbname, Map<String, Object> resultStats) throws IOException, SQLException {
+        HashSet<String> result = new HashSet<>();
+        Properties prop = new Properties();
+        prop.load(DataGenerator.class.getResourceAsStream("..\\..\\..\\..\\..\\..\\db-config.properties"));
+        String user = prop.get("user").toString();
+        String pass = prop.get("password").toString();
+        String url = "jdbc:postgresql://localhost/" + dbname + "?user=" + user + "&password=" + pass;
+        Connection conn = DriverManager.getConnection(url, user, pass);
+//        System.out.println("Connected to " + dbname);
+        Collection<Predicate> predicates = Schema.loadSchema(conn).predicates.values();
+        for (Predicate p : predicates) {
+            System.out.println("Get shapes for predicate " + p);
+            result.addAll(getShapes(p, conn, resultStats));
+        }
+        conn.close();
+        return result;
+    }
+
+    public static Map<Predicate, Set<String>> findShapes(String dbname, Set<Predicate> predicates, Map<String, Object> resultStats) throws IOException, SQLException {
+        Map<Predicate, Set<String>> result = new HashMap<>();
+        Properties prop = new Properties();
+        prop.load(DataGenerator.class.getResourceAsStream("..\\..\\..\\..\\..\\..\\db-config.properties"));
+        String user = prop.get("user").toString();
+        String pass = prop.get("password").toString();
+        String url = "jdbc:postgresql://localhost/" + dbname + "?user=" + user + "&password=" + pass;
+        Connection conn = DriverManager.getConnection(url, user, pass);
+//        System.out.println("Connected to " + dbname);
+        resultStats.put(OntologyAnalyzer.NO_DATA_SIZE, 0);
+        int n_shapes = 0;
+        for (Predicate p : predicates) {
+            result.put(p, getShapes(p, conn, resultStats));
+            n_shapes += result.get(p).size();
+        }
+        conn.close();
+        resultStats.put(OntologyAnalyzer.NO_DATA_SHAPES, n_shapes);
+        return result;
+    }
+
+    private static Set<String> getShapes(Predicate p, Connection conn, Map<String, Object> resultStats) throws SQLException {
+        HashSet<String> shapes = new HashSet<>();
+        Statement statement = conn.createStatement();
+        statement.execute("select * from " + p.name + ";");
+        ResultSet resultSet = statement.getResultSet();
+        int k=0;
+        while(resultSet.next()) {
+            String[] values = new String[p.arity];
+            StringBuilder ann = new StringBuilder();
+            int max = 1;
+            for (int i = 0; i < p.arity; i++) {
+                values[i] = resultSet.getString("c_" + i);
+                boolean repeated = false;
+                int j = 0;
+                for (j = 0; j < i; j++) {
+                    if (values[j].equals(values[i])) {
+                        repeated = true;
+                        break;
+                    }
+                }
+                if (repeated) {
+                    ann.append(Integer.toHexString((j+1)));
+                } else {
+                    ann.append(Integer.toHexString(max));
+                    max++;
+                }
+            }
+            shapes.add(ann.toString());
+            k++;
+        }
+        resultStats.put(OntologyAnalyzer.NO_DATA_SIZE, ((int)resultStats.get(OntologyAnalyzer.NO_DATA_SIZE)) + k);
+        return shapes;
+    }
+
+    public static void main1(String[] args) throws IOException, SQLException {
+        long startTime = System.nanoTime();
+        Set<String> small = findShapes("newdb", new HashMap<>());
+        long endTime = System.nanoTime();
+        System.out.println("Time (sec) for smalldb: " + ((endTime - startTime) / 1000000000F) + "\n\t");
+        System.out.println("#shapes = " + small.size());
+/*
+        startTime = System.nanoTime();
+        Set<String> medium = findShapes("mediumdb");
+        endTime = System.nanoTime();
+        System.out.println("Time (sec) for mediumdb: " + ((endTime - startTime) / 1000000000F) + "\n\t");
+        System.out.println("#shapes = " + medium.size());
+
+        startTime = System.nanoTime();
+        Set<String> large = findShapes("largedb");
+        endTime = System.nanoTime();
+        System.out.println("Time (sec) for largedb: " + ((endTime - startTime) / 1000000000F) + "\n\t");
+        System.out.println("#shapes = " + large.size());*/
     }
 }

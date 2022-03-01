@@ -31,42 +31,51 @@ import static ca.mcmaster.mmilani.omd.datalog.executer.SyntacticAnalyzer.isWeakl
 import static ca.mcmaster.mmilani.omd.datalog.executer.TerminationAnalyzer.terminates;
 
 public class OntologyAnalyzer {
-    private static Logger logger = LoggerFactory.getLogger(OntologyAnalyzer.class);
+    public static Logger logger = LoggerFactory.getLogger(OntologyAnalyzer.class);
 
 //    private final static DAOMCScenario daoScenario = new DAOMCScenario();
 
 
-    private static String AVG_ARITY = "avg_arity";
-    private static String MIN_ARITY = "min_arity";
-    private static String MAX_ARITY = "max_arity";
-    private static String NO_EVARS = "n_exist_vars";
-    public static String TIME_GENERATE_DEP_GRAPH = "t_graph";
-    public static String TIME_PARSING = "t_parse";
-    public static String TIME_CONNECTED_COMPONENT = "t_component";
-    public static String TIME_TERMINATES_GRAPH = "t_terminate_graph";
-    public static String TIME_TERMINATES_CHASE = "t_lunatic";
+    public static final String AVG_ARITY = "avg_arity";
+    public static final String MIN_ARITY = "min_arity";
+    public static final String MAX_ARITY = "max_arity";
+    public static final String NO_EVARS = "n_exist_vars";
+    public static final String TIME_GENERATE_DEP_GRAPH = "t_graph";
+    public static final String TIME_GENERATE_DEP_GRAPH_D = "t_graph_d";
+    public static final String TIME_PARSING = "t_parse";
+    public static final String TIME_CONNECTED_COMPONENT = "t_component";
+    public static final String TIME_TERMINATES_GRAPH = "t_terminate_graph";
+    public static final String TIME_TERMINATES_CHASE = "t_lunatic";
+    public static final String TIME_FIND_SHAPES = "t_shapes";
+    public static final String TIME_TERMINATES_GRAPH_D = "t_terminate_graph_d";
 
-    public static String NO_RULES = "n_rules";
-    public static String NO_PREDICATES = "n_predicates";
-    public static String NO_DATA_SIZE = "n_facts";
-    public static String NO_CONNECTED_COMPONENTS = "n_components";
-    public static String NO_SPECIAL_CONNECTED_COMPONENTS = "n_spacial_components";
-    public static String NO_GRAPH_NODES = "n_nodes";
-    public static String NO_GRAPH_EDGES = "n_edges";
-    public static String NO_GRAPH_SPECIAL_EDGES = "n_special_edges";
-    public static String TERMINATES_GRAPH = "terminates_graph";
-    public static String TERMINATES_CHASE = "terminates_lunatic";
-    public static String LINEAR = "linear";
-    public static String SIMPLE_LINEAR = "s_linear";
-    public static String WEAKLY_ACYCLIC = "weakly_acyclic";
+    public static final String NO_RULES = "n_rules";
+    public static final String NO_PREDICATES = "n_predicates";
+    public static final String NO_DATA_SIZE = "n_facts";
+    public static final String NO_DATA_SHAPES = "n_shapes";
+    public static final String NO_CONNECTED_COMPONENTS = "n_components";
+    public static final String NO_SPECIAL_CONNECTED_COMPONENTS = "n_spacial_components";
+    public static final String NO_GRAPH_NODES = "n_nodes";
+    public static final String NO_GRAPH_EDGES = "n_edges";
+    public static final String NO_GRAPH_SPECIAL_EDGES = "n_special_edges";
+    public static final String NO_CONNECTED_COMPONENTS_D = "n_components_d";
+    public static final String NO_SPECIAL_CONNECTED_COMPONENTS_D = "n_spacial_components_d";
+    public static final String NO_GRAPH_NODES_D = "n_nodes_d";
+    public static final String NO_GRAPH_EDGES_D = "n_edges_d";
+    public static final String NO_GRAPH_SPECIAL_EDGES_D = "n_special_edges_d";
+    public static final String TERMINATES_GRAPH = "terminates_graph";
+    public static final String TERMINATES_CHASE = "terminates_lunatic";
+    public static final String LINEAR = "linear";
+    public static final String SIMPLE_LINEAR = "s_linear";
+    public static final String WEAKLY_ACYCLIC = "weakly_acyclic";
 
     public static void main(String[] args) throws Exception {
         String filepath = args[0];
         System.out.println("filepath = " + filepath);
-        String dirpath = filepath.substring(0, filepath.lastIndexOf("/"));
+        String dirpath = filepath.substring(0, filepath.lastIndexOf("\\"));
 
-        String ontologyName = filepath.substring(filepath.lastIndexOf("/") + 1, filepath.lastIndexOf("."));
-        String resultFileName = dirpath + "/" + ontologyName + ".res";
+        String ontologyName = filepath.substring(filepath.lastIndexOf("\\") + 1, filepath.lastIndexOf("."));
+        String resultFileName = dirpath + "\\" + ontologyName + ".res";
         boolean exists = new File(resultFileName).exists();
         if (!AnalyzerExec.checkOption(args, "-r") && exists)
         {
@@ -114,7 +123,7 @@ public class OntologyAnalyzer {
 
     /* Write the result map as key values in the file specified by "filename"
     * */
-    private static void exportResults(String filename, Map<String, Object> result, boolean append) throws IOException {
+    public static void exportResults(String filename, Map<String, Object> result, boolean append) throws IOException {
         File outfile = new File(filename);
         if (!outfile.exists())
             outfile.createNewFile();
@@ -128,7 +137,7 @@ public class OntologyAnalyzer {
         out.close();
     }
 
-//    private static void runChaseLunatic(Map<String, Object> result, Program program, String dirpath, String[] inOptions) throws Exception {
+//    public static void runChaseLunatic(Map<String, Object> result, Program program, String dirpath, String[] inOptions) throws Exception {
 //        System.out.println("Running the chase for " + program.name + "...");
 //        String scenarioFileName = dirpath + "\\" + program.name + ".xml";
 //        File outputfile = new File(scenarioFileName);
@@ -177,7 +186,7 @@ public class OntologyAnalyzer {
 //        result.put(TIME_TERMINATES_CHASE, ChaseStats.getInstance().getStat(ChaseStats.TGD_TIME));
 //    }
 
-    private static void processSyntax(Map<String, Object> result, Program program) throws IOException {
+    public static void processSyntax(Map<String, Object> result, Program program) throws IOException {
             long endTime, startTime;
             startTime = System.nanoTime();
             Map<Position, Node> graph = buildDependencyGraph(program.tgds);
@@ -213,7 +222,7 @@ public class OntologyAnalyzer {
             System.out.println("Graph-based analysis " + result.get(TIME_TERMINATES_GRAPH) + " ms\n\n");
     }
 
-    private static int computeTotalExistsVars(Program program) {
+    public static int computeTotalExistsVars(Program program) {
         int count = 0;
         for (TGD tgd : program.tgds) {
             count += tgd.existentialVars.size();
@@ -221,7 +230,7 @@ public class OntologyAnalyzer {
         return count;
     }
 
-    private static int computeDBSize(Program program) {
+    public static int computeDBSize(Program program) {
         int size = 0;
         for (Integer count : program.edb.recordCount.values()) {
             size += count;
@@ -229,7 +238,7 @@ public class OntologyAnalyzer {
         return size;
     }
 
-    private static void computeArityInfo(Program program, Map<String, Object> result) {
+    public static void computeArityInfo(Program program, Map<String, Object> result) {
         double sum = 0, count = 0, min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
         for (Predicate predicate : program.schema.predicates.values()) {
             sum += predicate.arity;

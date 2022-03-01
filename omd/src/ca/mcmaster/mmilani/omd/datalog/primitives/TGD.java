@@ -3,6 +3,7 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public class TGD extends Rule<Conjunct, Conjunct> {
@@ -26,6 +27,23 @@ public class TGD extends Rule<Conjunct, Conjunct> {
         if (!variable.isBody() && variable.isHead())
             variable.setExistential(true);
         return variable;
+    }
+
+    public void initVars() {
+        for (PositiveAtom atom : body.getAtoms()) {
+            for (Term term : atom.terms) {
+                Variable v = fetchVariable(term.label);
+                v.body = true;
+                variables.put(term.label, v);
+            }
+        }
+        for (PositiveAtom atom : head.getAtoms()) {
+            for (Term term : atom.terms) {
+                Variable v = fetchVariable(term.label);
+                v.head = true;
+                variables.put(term.label, v);
+            }
+        }
     }
 
     public boolean isFrontier(Variable variable) {

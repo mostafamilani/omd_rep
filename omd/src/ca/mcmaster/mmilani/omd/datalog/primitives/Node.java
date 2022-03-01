@@ -7,7 +7,7 @@ public class Node {
 //    public Set<Node> nexts = new HashSet<Node>();
 //    public Set<Node> nextSpecials = new HashSet<Node>();
     public Set<Edge> nexts = new HashSet<>();
-    public Set<Node> prNodes = new HashSet<>();
+//    public Set<Node> prNodes = new HashSet<>();
     public int index = -1;
     public boolean onStack;
     public int lowLink;
@@ -41,22 +41,31 @@ public class Node {
         return Objects.hash(p);
     }
 
-    public void addNext(Node next, TGD rule, boolean special) {
+    public boolean addNext(Node next, TGD rule, boolean special) {
         Edge edge = nextEdge(next);
         if (edge == null) {
             edge = new Edge();
-            edge.source = this;
+//            edge.source = this;
             edge.destination = next;
         }
-        edge.tgds.add(rule);
+//        edge.tgds.add(rule);
         edge.special = edge.special || special;
-        nexts.add(edge);
-        next.prNodes.add(this);
+        boolean newAdded = false;
+        if (!nexts.contains(edge)) {
+            nexts.add(edge);
+//            next.prNodes.add(this);
+            newAdded = true;
+        }
+//            System.out.println(edge + " added!");
+//        } else {
+//            System.out.println(edge + " is already added!");
+//        }
+        return newAdded;
     }
 
     public Set<Node> nextNodes(boolean reverse) {
-        if (reverse)
-            return prNodes;
+//        if (reverse)
+//            return prNodes;
         HashSet<Node> nodes = new HashSet<>();
         for (Edge next : nexts) {
             nodes.add(next.destination);

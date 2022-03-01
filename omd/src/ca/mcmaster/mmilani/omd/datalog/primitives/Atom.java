@@ -6,6 +6,8 @@ public abstract class Atom {
     public Predicate predicate;
     public List<Term> terms;
 
+    private List<Variable> variables;
+
     public Atom() {
     }
 
@@ -63,12 +65,17 @@ public abstract class Atom {
         return true;
     }
 
-    public Set<Variable> getVariables() {
-        HashSet<Variable> variables = new HashSet<>();
+    public List<Variable> getVariables() {
+        if (variables == null)
+            setVariables();
+        return variables;
+    }
+
+    public void setVariables() {
+        variables = new ArrayList<>();
         for (Term term : terms) {
-            if (term instanceof Variable)
+            if (term instanceof Variable && !variables.contains(term))
                 variables.add((Variable) term);
         }
-        return variables;
     }
 }

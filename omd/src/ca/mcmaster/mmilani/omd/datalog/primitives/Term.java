@@ -3,6 +3,8 @@ package ca.mcmaster.mmilani.omd.datalog.primitives;
 import ca.mcmaster.mmilani.omd.datalog.parsing.Parser;
 import ca.mcmaster.mmilani.omd.datalog.engine.Program;
 
+import java.util.Objects;
+
 public abstract class Term {
     public String label;
     public static Term parse(String s, boolean body, Program program, Rule... owner) {
@@ -22,5 +24,18 @@ public abstract class Term {
 
     public String toString() {
         return label;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Term term = (Term) o;
+        return Objects.equals(label, term.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(label);
     }
 }

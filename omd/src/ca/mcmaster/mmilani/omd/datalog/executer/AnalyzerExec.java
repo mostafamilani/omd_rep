@@ -25,7 +25,7 @@ public class AnalyzerExec {
 //                options.add("-r");
 //                options.add("smalldb");
 //                options.add("C:\\Users\\mmilani7\\IdeaProjects\\omd_rep\\omd\\src\\db-config.properties");
-                exec(OntologyAnalyzer.class, options);
+                exec(LinearOntologyAnalyzer.class, options);
             } catch (Exception e) {
                 System.out.println(file.getName() + " return with error!");
                 e.printStackTrace();
@@ -166,7 +166,7 @@ public class AnalyzerExec {
         return false;
     }
 
-    public static boolean exec(Class<OntologyAnalyzer> klass, List<String> options) throws Exception {
+    public static boolean exec(Class klass, List<String> options) throws Exception {
         String javaHome = System.getProperty("java.home");
         String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
         String classpath = System.getProperty("java.class.path");

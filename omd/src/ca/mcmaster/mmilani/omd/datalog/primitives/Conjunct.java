@@ -4,6 +4,7 @@ import java.util.*;
 
 public class Conjunct {
     private List<PositiveAtom> atoms = new ArrayList<>();
+    private List<Variable> variables;
 
     public Conjunct(Conjunct conjunct, PositiveAtom toRemove) {
         atoms = new ArrayList<>(conjunct.getAtoms());
@@ -61,12 +62,17 @@ public class Conjunct {
         });
     }
 
-    public Set<Variable> getVariables() {
-        HashSet<Variable> variables = new HashSet<>();
+    public List<Variable> getVariables() {
+        if (variables == null)
+            setVariables();
+        return variables;
+    }
+
+    private void setVariables() {
+        variables = new ArrayList<>();
         for (PositiveAtom atom : atoms) {
             variables.addAll(atom.getVariables());
         }
-        return variables;
     }
 
     public void addFirst(PositiveAtom atom) {
