@@ -13,11 +13,11 @@ import java.util.*;
 public class DataGenerator {
     private static int domainSize;
 
-    public static void main(String[] args) throws IOException, SQLException {
+    public static void main1(String[] args) throws IOException, SQLException {
 //        if (AnalyzerExec.checkOption(args, "-s"))
 //            createDatabases();
 //        if (AnalyzerExec.checkOption(args, "-d"))
-            fillDatabases();
+//            fillDatabases();
 //        if (AnalyzerExec.checkOption(args, "-p"))
 //            printDBStats();
     }
@@ -247,11 +247,13 @@ public class DataGenerator {
             shapes.add(ann.toString());
             k++;
         }
-        resultStats.put(OntologyAnalyzer.NO_DATA_SIZE, ((int)resultStats.get(OntologyAnalyzer.NO_DATA_SIZE)) + k);
+        if (resultStats.containsKey(OntologyAnalyzer.NO_DATA_SIZE)) {
+            resultStats.put(OntologyAnalyzer.NO_DATA_SIZE, ((int)resultStats.get(OntologyAnalyzer.NO_DATA_SIZE)) + k);
+        }
         return shapes;
     }
 
-    public static void main1(String[] args) throws IOException, SQLException {
+    public static void main(String[] args) throws IOException, SQLException {
         long startTime = System.nanoTime();
         Set<String> small = findShapes("newdb", new HashMap<>());
         long endTime = System.nanoTime();

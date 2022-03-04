@@ -51,7 +51,7 @@ public class ProgramGenerator {
                 int j = Integer.parseInt(ant.charAt(i) + "", 16)-1;
 //                System.out.println("j = " + j);
                 if (j != i) {
-                    System.out.println("Replace " + vs.get(j) + " with " + vs.get(i));
+//                    System.out.println("Replace " + vs.get(j) + " with " + vs.get(i));
                     replaceVarInConjunct(tgd.body, vs.get(i), vs.get(j));
                     replaceVarInConjunct(tgd.head, vs.get(i), vs.get(j));
                 }
@@ -257,10 +257,13 @@ public class ProgramGenerator {
         int i = 1;
         for (String p_profile : predicateProfiles) {
             System.out.println("Generating programs in predicate profile " + p_profile);
-                for (String a_profile : arityProfiles) {
-                    System.out.println("Generating programs in arity profile " + a_profile);
-                    for (String r_profile : ruleProfiles) {
-                        System.out.println("Generating programs in rules profile " + r_profile);
+        for (String r_profile : ruleProfiles) {
+            System.out.println("Generating programs in rules profile " + r_profile);
+        for (String a_profile : arityProfiles) {
+            System.out.println("Generating programs in arity profile " + a_profile);
+
+
+
                     for (int j = 0; j < n_programs; j++) {
                         int[] per_range = getRange(p_profile);
                         per_range[1] = per_range[1] - 1;
